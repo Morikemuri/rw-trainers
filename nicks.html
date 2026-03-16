@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#050c0b">
+<title>RW — Тренажёр ников</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Onest:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#050c0b; --bg2:#091210; --bg3:#0f1e1c; --border:#162420;
+    --accent:#0d9488; --accent2:#14b8a6; --accent3:#5eead4;
+    --green:#22c55e; --red:#ef4444; --orange:#f97316; --text:#eef8f6;
+    --muted:#3d6660; --card:#080f0e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{background:var(--bg);color:var(--text);font-family:'Onest',sans-serif;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(13,148,136,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(13,148,136,0.05) 1px,transparent 1px);background-size:52px 52px;pointer-events:none;z-index:0;}
+  body::after{content:'';position:fixed;top:-30%;right:-15%;width:65%;height:65%;background:radial-gradient(ellipse,rgba(13,148,136,0.12) 0%,transparent 65%);pointer-events:none;z-index:0;}
+  .back-btn{position:fixed;top:16px;left:16px;z-index:100;background:var(--card);border:1px solid var(--border);border-radius:100px;padding:8px 16px;font-family:'Onest',sans-serif;font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:6px;transition:all .2s;}
+  .back-btn:hover{border-color:var(--accent);color:var(--accent3);}
+  .score-badge{position:fixed;top:16px;right:16px;z-index:100;background:var(--card);border:1px solid var(--border);border-radius:100px;padding:8px 18px;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;color:var(--accent3);}
+  .container{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 18px 80px;}
+  .header{padding:60px 0 36px;text-align:center;}
+  .header-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(13,148,136,0.1);border:1px solid rgba(13,148,136,0.25);border-radius:100px;padding:6px 18px;font-size:11px;font-weight:700;color:var(--accent3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:22px;}
+  .header h1{font-family:'Unbounded',sans-serif;font-size:clamp(24px,5vw,44px);font-weight:900;line-height:1.1;background:linear-gradient(135deg,#fff 0%,var(--accent3) 55%,var(--accent) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;}
+  .header p{color:var(--muted);font-size:14px;}
+  .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px;}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 10px;text-align:center;}
+  .stat-val{font-family:'Unbounded',sans-serif;font-size:22px;font-weight:700;line-height:1;margin-bottom:5px;}
+  .stat-label{font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;}
+  .s-correct .stat-val{color:var(--green);} .s-wrong .stat-val{color:var(--red);} .s-streak .stat-val{color:var(--orange);} .s-total .stat-val{color:var(--accent3);}
+  .progress-wrap{margin-bottom:22px;}
+  .progress-info{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:8px;}
+  .progress-bar{height:5px;background:var(--bg3);border-radius:100px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2),#2dd4bf);border-radius:100px;transition:width .4s cubic-bezier(.4,0,.2,1);position:relative;}
+  .progress-fill::after{content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);width:9px;height:9px;background:#fff;border-radius:50%;box-shadow:0 0 8px var(--accent2);}
+  .filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;}
+  .filter-btn{background:var(--bg3);border:1px solid var(--border);border-radius:100px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s;font-family:'Onest',sans-serif;}
+  .filter-btn:hover{border-color:var(--accent);color:var(--accent3);}
+  .filter-btn.active{background:rgba(13,148,136,0.15);border-color:var(--accent);color:var(--accent3);}
+  .question-card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:30px;margin-bottom:14px;position:relative;overflow:hidden;animation:cardIn .35s cubic-bezier(.4,0,.2,1);transition:border-color .3s;}
+  .question-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2),transparent);}
+  .question-card.correct-card{border-color:rgba(34,197,94,.4);}
+  .question-card.wrong-card{border-color:rgba(239,68,68,.4);}
+  .q-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .category-tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 12px;border-radius:6px;}
+  .cat-rule{background:rgba(13,148,136,.12);color:#5eead4;border:1px solid rgba(13,148,136,.25);}
+  .cat-donate{background:rgba(245,158,11,.12);color:#fcd34d;border:1px solid rgba(245,158,11,.25);}
+  .cat-nick{background:rgba(168,85,247,.12);color:#d8b4fe;border:1px solid rgba(168,85,247,.25);}
+  .cat-action{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.25);}
+  .cat-example{background:rgba(37,99,235,.12);color:#93c5fd;border:1px solid rgba(37,99,235,.25);}
+  .q-num{font-family:'Unbounded',sans-serif;font-size:11px;color:var(--muted);font-weight:600;}
+  .question-text{font-size:17px;font-weight:500;line-height:1.65;color:var(--text);margin-bottom:6px;}
+  .nick-display{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px 20px;margin:14px 0 4px;display:flex;align-items:center;gap:12px;font-family:'Onest',monospace;}
+  .nick-rank{font-size:12px;font-weight:700;padding:3px 10px;border-radius:6px;white-space:nowrap;}
+  .rank-player{background:rgba(100,116,139,.15);color:#94a3b8;border:1px solid rgba(100,116,139,.25);}
+  .rank-hero{background:rgba(234,179,8,.12);color:#fcd34d;border:1px solid rgba(234,179,8,.25);}
+  .rank-dragon{background:rgba(239,68,68,.12);color:#fca5a5;border:1px solid rgba(239,68,68,.25);}
+  .rank-overlord{background:rgba(168,85,247,.12);color:#d8b4fe;border:1px solid rgba(168,85,247,.25);}
+  .rank-imperator{background:rgba(249,115,22,.12);color:#fdba74;border:1px solid rgba(249,115,22,.25);}
+  .nick-text{font-size:16px;font-weight:700;color:var(--accent3);}
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;}
+  .choice-btn{background:var(--bg3);border:1px solid var(--border);border-radius:13px;padding:13px 15px;color:var(--text);font-family:'Onest',sans-serif;font-size:14px;font-weight:500;cursor:pointer;text-align:left;transition:all .2s;display:flex;align-items:center;gap:10px;}
+  .choice-btn:hover:not(:disabled){border-color:var(--accent);background:rgba(13,148,136,.08);transform:translateY(-1px);}
+  .choice-btn.sel-correct{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.5);color:#4ade80;}
+  .choice-btn.sel-wrong{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.5);color:#f87171;}
+  .choice-btn.reveal{background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.3);color:#4ade80;}
+  .choice-btn:disabled{cursor:not-allowed;}
+  .choice-letter{width:26px;height:26px;min-width:26px;border-radius:7px;background:rgba(13,148,136,.15);border:1px solid rgba(13,148,136,.3);display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:var(--accent3);}
+  .feedback{margin-top:14px;padding:13px 17px;border-radius:12px;font-size:14px;font-weight:500;line-height:1.55;display:none;animation:fadeUp .3s ease;}
+  .feedback.show{display:block;}
+  .feedback.fb-correct{background:rgba(34,197,94,.09);border:1px solid rgba(34,197,94,.3);color:#4ade80;}
+  .feedback.fb-wrong{background:rgba(239,68,68,.09);border:1px solid rgba(239,68,68,.3);color:#f87171;}
+  .feedback .ans{color:#4ade80;font-family:'Unbounded',sans-serif;font-size:12px;font-weight:700;}
+  .next-btn{display:none;width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:14px;color:var(--text);font-family:'Onest',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;text-align:center;margin-top:10px;}
+  .next-btn.show{display:block;}
+  .next-btn:hover{background:rgba(13,148,136,.1);border-color:var(--accent);color:var(--accent3);}
+  .results-screen{display:none;text-align:center;padding:48px 0;}
+  .results-screen.show{display:block;}
+  .results-emoji{font-size:72px;margin-bottom:16px;display:block;animation:bounce .7s ease;}
+  .results-title{font-family:'Unbounded',sans-serif;font-size:30px;font-weight:900;margin-bottom:10px;background:linear-gradient(135deg,#fff,var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .results-sub{color:var(--muted);font-size:15px;margin-bottom:40px;}
+  .results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:40px;}
+  .r-stat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px 16px;}
+  .r-val{font-family:'Unbounded',sans-serif;font-size:38px;font-weight:900;margin-bottom:6px;}
+  .r-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+  .restart-btn{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:14px;padding:16px 44px;color:#fff;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.04em;transition:all .2s;box-shadow:0 4px 24px rgba(13,148,136,.35);}
+  .restart-btn:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(13,148,136,.5);}
+  @keyframes cardIn{from{opacity:0;transform:translateY(18px) scale(.98);}to{opacity:1;transform:none;}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  @keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-18px)}70%{transform:translateY(-6px)}}
+  @media(max-width:600px){.stats-bar{grid-template-columns:repeat(2,1fr);}.choices{grid-template-columns:1fr;}.results-grid{grid-template-columns:repeat(2,1fr);}.question-card{padding:20px 16px;}.header{padding:52px 0 28px;}}
+</style>
+</head>
+<body>
+<a class="back-btn" href="index.html">← Назад</a>
+<div class="score-badge" id="scoreBadge">⚡ 0 / 0</div>
+<div class="container">
+  <div class="header">
+    <div class="header-badge">🏷️ ReallyWorld · Тренажёр ников</div>
+    <h1>Некорректные ники</h1>
+    <p>Правила, донат, антиспам, алгоритмы действий</p>
+  </div>
+  <div class="stats-bar">
+    <div class="stat s-total"><div class="stat-val" id="statTotal">0</div><div class="stat-label">Пройдено</div></div>
+    <div class="stat s-correct"><div class="stat-val" id="statCorrect">0</div><div class="stat-label">Верно</div></div>
+    <div class="stat s-wrong"><div class="stat-val" id="statWrong">0</div><div class="stat-label">Ошибок</div></div>
+    <div class="stat s-streak"><div class="stat-val" id="statStreak">0</div><div class="stat-label">Серия 🔥</div></div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-info"><span id="progressText">Вопрос 1</span><span id="progressPct">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+  <div class="filter-bar" id="filterBar">
+    <button class="filter-btn active" onclick="setFilter('all')">Все</button>
+    <button class="filter-btn" onclick="setFilter('rule')">Правила</button>
+    <button class="filter-btn" onclick="setFilter('donate')">Донат</button>
+    <button class="filter-btn" onclick="setFilter('action')">Действия</button>
+    <button class="filter-btn" onclick="setFilter('example')">Примеры</button>
+    <button class="filter-btn" onclick="setFilter('nick')">Типы ников</button>
+  </div>
+  <div id="quizArea">
+    <div class="question-card" id="questionCard">
+      <div class="q-meta">
+        <div class="category-tag" id="categoryTag"></div>
+        <div class="q-num" id="qNum">1 / 0</div>
+      </div>
+      <div class="question-text" id="questionText"></div>
+      <div id="nickArea"></div>
+      <div id="answerArea"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="nextBtn" onclick="nextQ()">Следующий вопрос →</button>
+    </div>
+  </div>
+  <div class="results-screen" id="resultsScreen">
+    <span class="results-emoji" id="resEmoji">🏆</span>
+    <div class="results-title" id="resTitle"></div>
+    <div class="results-sub" id="resSub"></div>
+    <div class="results-grid">
+      <div class="r-stat"><div class="r-val" id="rC" style="color:var(--green)">0</div><div class="r-label">Верных</div></div>
+      <div class="r-stat"><div class="r-val" id="rW" style="color:var(--red)">0</div><div class="r-label">Ошибок</div></div>
+      <div class="r-stat"><div class="r-val" id="rP" style="color:var(--accent3)">0%</div><div class="r-label">Точность</div></div>
+    </div>
+    <button class="restart-btn" onclick="restart()">🔄 Пройти снова</button>
+  </div>
+</div>
+<script>
+const Q=[
+  {cat:'rule',catLabel:'Правило',catClass:'cat-rule',type:'choice',text:'Какой донат освобождает игрока от большинства правил некорректного ника?',nick:null,options:['Герой','Дракон','Оверлорд и выше','Импертор'],correct:2,explain:'Донат оверлорд и выше освобождает от правил «мат/аморал/оск. игрока» в нике.'},
+  {cat:'rule',catLabel:'Правило',catClass:'cat-rule',type:'choice',text:'Что из этого является некорректным ником с ЛЮБЫМ донатом (даже Дракон)?',nick:null,options:['Мат в нике','Аморал в нике','Оскорбление администрации в нике','Косвенное оск. игрока'],correct:2,explain:'Оскорбление администрации/сервера и названия читов — некорректные с любым донатом.'},
+  {cat:'rule',catLabel:'Правило',catClass:'cat-rule',type:'choice',text:'Перечисли типы некорректных ников, которые некорректны с ЛЮБЫМ донатом.',nick:null,options:['Только мат и аморал','Антиспам-слова, читы, оск. адм./сервера, пропаганда нацизма','Только оскорбления','Все типы без исключения'],correct:1,explain:'С любым донатом некорректны: антиспам-слова, читы, оск. адм., оск. проекта, пропаганда нацизма/расизма.'},
+  {cat:'rule',catLabel:'Правило',catClass:'cat-rule',type:'choice',text:'Слово «даун» в нике — это некорректно?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'_franchyzdayn_'},options:['Нет — обычное слово','Да — по решению высшей администрации ники со словом «даун» некорректны'],correct:1,explain:'По решению высшей администрации: ники с «даун» — некорректны при доносе ниже оверлорда.'},
+  {cat:'rule',catLabel:'Правило',catClass:'cat-rule',type:'choice',text:'Ник содержит слово, за которое бьёт антиспам. Это некорректный ник с каким донатом?',nick:null,options:['Только при доносе < оверлорда','С ЛЮБЫМ донатом, даже Дракон'],correct:1,explain:'Антиспам-слово в нике = некорректный с любым донатом.'},
+  {cat:'rule',catLabel:'Правило',catClass:'cat-rule',type:'choice',text:'Ник с номером телефона. Когда баним?',nick:null,options:['Всегда баним','Только если донат ниже оверлорда','Только если донат ниже Героя','Никогда'],correct:1,explain:'Ник с номером телефона — баним только если донат ниже оверлорда.'},
+  {cat:'rule',catLabel:'Правило',catClass:'cat-rule',type:'choice',text:'Ник схож с ником высшей администрации. Это нарушение?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'angelforch228'},options:['Да — некорректный ник при доносе < оверлорда','Нет — просто похожий ник'],correct:0,explain:'Ники, схожие с никами высшей администрации — некорректные (при доносе < оверлорда).'},
+  {cat:'donate',catLabel:'Донат',catClass:'cat-donate',type:'choice',text:'[PLAYER] ya_pidoor007 — что делаем?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'ya_pidoor007'},options:['Предупреждение, дать 5 минут','Бан навсегда (-s) — некорректный ник','Мут 4ч','Нет нарушения'],correct:1,explain:'Мат в нике + PLAYER (ниже оверлорда) → бан навсегда (-s).'},
+  {cat:'donate',catLabel:'Донат',catClass:'cat-donate',type:'choice',text:'[OVERLORD] dun_fimoz — это некорректный ник?',nick:{rank:'OVERLORD',rankClass:'rank-overlord',nick:'dun_fimoz'},options:['Да — аморал («фимоз»), баним','Нет — донат оверлорд освобождает от правила аморала'],correct:1,explain:'Оверлорд и выше — аморал/мат/оск.игрока в нике не наказываются.'},
+  {cat:'donate',catLabel:'Донат',catClass:'cat-donate',type:'choice',text:'[DRAGON] RWMODERI_HUESOSI — некорректный ник?',nick:{rank:'DRAGON',rankClass:'rank-dragon',nick:'RWMODERI_HUESOSI'},options:['Нет — у него Дракон','Да — оскорбление администрации некорректно с ЛЮБЫМ донатом'],correct:1,explain:'Оскорбление администрации в нике — некорректный с ЛЮБЫМ донатом, даже Дракон.'},
+  {cat:'donate',catLabel:'Донат',catClass:'cat-donate',type:'choice',text:'[DRAGON] delta_bystit_iaa — реклама чита в нике. Баним?',nick:{rank:'DRAGON',rankClass:'rank-dragon',nick:'delta_bystit_iaa'},options:['Нет — Дракон освобождает','Да — реклама/упоминание чита некорректно с любым донатом'],correct:1,explain:'Реклама чита = антиспам-слово = некорректный с любым донатом.'},
+  {cat:'donate',catLabel:'Донат',catClass:'cat-donate',type:'choice',text:'[IMPERATOR] bifafLOX — оскорбляет администрацию. Как поступаем?',nick:{rank:'IMPERATOR',rankClass:'rank-imperator',nick:'bifafLOX'},options:['Нет нарушения — Император освобождает','Баним — оскорбление адм. некорректно при любом доносе'],correct:1,explain:'Даже Император: оскорбление администрации в нике = некорректный. Баним.'},
+  {cat:'donate',catLabel:'Донат',catClass:'cat-donate',type:'choice',text:'[HERO] gondon52 — донат Герой, мат в нике. Баним?',nick:{rank:'HERO',rankClass:'rank-hero',nick:'gondon52'},options:['Да — Герой ниже Оверлорда, баним навсегда (-s)','Нет — Герой освобождает'],correct:0,explain:'Герой < Оверлорд → мат в нике → некорректный → бан навсегда (-s).'},
+  {cat:'action',catLabel:'Действие',catClass:'cat-action',type:'choice',text:'У игрока ОРИГИНАЛЬНЫЙ некорректный ник с донатом PLAYER. Что делаем?',nick:null,options:['Предупреждение и 5 минут на смену','Бан навсегда (-s)','Бан 7 дней','Мут 4ч'],correct:1,explain:'Оригинальный некорректный ник + донат < оверлорда → бан навсегда (-s).'},
+  {cat:'action',catLabel:'Действие',catClass:'cat-action',type:'choice',text:'Игрок установил /nick с некорректным словом. Первый шаг?',nick:null,options:['Сразу бан навсегда','Написать в чат: «[OrigNick] смени ник, у тебя он некорректный»','Бан 1ч без предупреждения','Написать в личку'],correct:1,explain:'Шаг 1: предупреждение в чате с оригинальным ником игрока. Даём 5 минут на смену.'},
+  {cat:'action',catLabel:'Действие',catClass:'cat-action',type:'choice',text:'Игрок получил предупреждение за /nick, но проигнорировал (прошло 5 минут). Следующий шаг?',nick:null,options:['Бан навсегда сразу','Бан 1ч «Некорректный ник (смени)»','Ещё одно предупреждение','Мут 12ч'],correct:1,explain:'Игнорирует предупреждение → бан 1ч «Некорректный ник (смени)».'},
+  {cat:'action',catLabel:'Действие',catClass:'cat-action',type:'choice',text:'После бана 1ч игрок всё равно не сменил /nick. Что делаем?',nick:null,options:['Ещё один бан 1ч','Бан навсегда «Некорректный ник» (без -s)','Бан навсегда (-s)','Мут 12ч'],correct:1,explain:'После бана 1ч игнорирует → бан навсегда «Некорректный ник» (без -s).'},
+  {cat:'action',catLabel:'Действие',catClass:'cat-action',type:'choice',text:'/nick содержит антиспам-слово (Sunrise, брoя и т.п.). Правильный алгоритм?',nick:null,options:['Предупреждение → бан 1ч → бан навсегда','/realname → скрин → /nick [OrigNick] off → бан 7 дней (без -s)','Сразу бан навсегда (-s)','Только предупреждение'],correct:1,explain:'/realname → фотофиксация → /nick [OrigNick] off → бан 7 дней «Некорректный /nick» (без -s).'},
+  {cat:'action',catLabel:'Действие',catClass:'cat-action',type:'choice',text:'Игрок поставил /nick «admin_xyesos». Предупреждаем?',nick:null,options:['Да — даём 5 минут на смену','Нет — баним сразу за оскорбление администрации'],correct:1,explain:'Оскорбление/шутки в сторону адм. в /nick → баним немедленно, без предупреждений.'},
+  {cat:'action',catLabel:'Действие',catClass:'cat-action',type:'choice',text:'Игрок с оскорбительным ником кидает тебе монетки. Что делаем?',nick:null,options:['Игнорируем — нет нарушения правил чата','Баним за оскорбление администрации по тяжести нарушения в нике'],correct:1,explain:'Монетки/тп с ника, оскорбляющего адм. — баним за оск. адм. по тяжести нарушения в нике.'},
+  {cat:'action',catLabel:'Действие',catClass:'cat-action',type:'choice',text:'Сколько минут даётся на смену некорректного /nick?',nick:null,options:['1 минута','3 минуты','5 минут','10 минут'],correct:2,explain:'На смену некорректного ника через /nick даётся 5 минут.'},
+  {cat:'example',catLabel:'Пример',catClass:'cat-example',type:'choice',text:'Почему этот ник некорректный?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'LolSosnyezka'},options:['Мат — «сос»','Аморал — «сосни»','Оскорбление игрока','Антиспам-слово'],correct:1,explain:'LolSosnyezka содержит аморал: «сосни». Донат PLAYER < оверлорда → бан навсегда (-s).'},
+  {cat:'example',catLabel:'Пример',catClass:'cat-example',type:'choice',text:'Почему этот ник некорректный?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'Sanrayz8'},options:['Мат','Аморал','Упоминание стороннего проекта + антиспам-слово «Sunrise»','Оскорбление игрока'],correct:2,explain:'Sanrayz8 = Sunrise — завуалированное упоминание стороннего проекта, бьёт антиспам. Некорректен с ЛЮБЫМ донатом.'},
+  {cat:'example',catLabel:'Пример',catClass:'cat-example',type:'choice',text:'Почему этот ник некорректный?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'DaisukiNarot'},options:['Мат','Аморал — «дай суке на рот»','Оскорбление игрока','Упоминание родных'],correct:1,explain:'DaisukiNarot = «дай суке на рот» — аморал. Донат PLAYER → бан навсегда (-s).'},
+  {cat:'example',catLabel:'Пример',catClass:'cat-example',type:'choice',text:'Почему этот ник некорректный?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'tidolbael1029'},options:['Мат','Прямое оскорбление — «ты долбаёб» (последняя буква изменена)','Аморал','Антиспам'],correct:1,explain:'tidolbael = «ти долбаёл» = «ты долбаёб» с изменённой буквой. Завуалированное оскорбление игрока.'},
+  {cat:'example',catLabel:'Пример',catClass:'cat-example',type:'choice',text:'Почему этот ник некорректный?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'MuroAsFuck'},options:['Только мат (fuck)','Прямое оскорбление игрока (муро блядь) + мат (блять)','Аморал','Антиспам-слово'],correct:1,explain:'MuroAsFuck = «муро — блядь». Транслит оскорбления + мат → некорректный.'},
+  {cat:'example',catLabel:'Пример',catClass:'cat-example',type:'choice',text:'Почему этот ник некорректный?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'zigov1331'},options:['Мат','Аморал','Пропаганда нацизма — «зигов» (зига = нацистское приветствие)','Оскорбление игрока'],correct:2,explain:'«Зигов» — от «зига» (нацистское приветствие). Пропаганда нацизма → некорректный с любым донатом.'},
+  {cat:'example',catLabel:'Пример',catClass:'cat-example',type:'choice',text:'Почему этот ник некорректный?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'mamaexermita1'},options:['Мат','Аморал','Некорректное упоминание родных — «мама экзермита»','Антиспам'],correct:2,explain:'mamaexermita = «мама экзермита» — некорректное упоминание родных игрока. Донат PLAYER → бан (-s).'},
+  {cat:'example',catLabel:'Пример',catClass:'cat-example',type:'choice',text:'Почему этот ник некорректный?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'broi9brossasa'},options:['Мат','Аморал — «соса»','Ник известного хвх ютубера «броя» — бьёт антиспам','Оскорбление игрока'],correct:2,explain:'broi9brossasa содержит «броя» — ник хвх ютубера, бьёт антиспам. Некорректный с любым донатом.'},
+  {cat:'example',catLabel:'Пример',catClass:'cat-example',type:'choice',text:'Почему этот ник некорректный?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'Ronaldo1488521'},options:['Имя Роналду оскорбительно','Пропаганда нацизма — «1488»','Мат','Антиспам-слово'],correct:1,explain:'«1488» — символ нацизма. Пропаганда нацизма → некорректный ник.'},
+  {cat:'nick',catLabel:'Тип ника',catClass:'cat-nick',type:'choice',text:'Какой из этих ников содержит аморал?',nick:null,options:['delta_bystit','MrMoshonka228','Sanrayz8','angelforch228'],correct:1,explain:'MrMoshonka228 — аморал: «мошонка». delta_bystit — чит; Sanrayz8 — антиспам; angelforch228 — схожесть с адм.'},
+  {cat:'nick',catLabel:'Тип ника',catClass:'cat-nick',type:'choice',text:'Какой из ников содержит прямое оскорбление игрока?',nick:null,options:['ya_pidoor007','pashatikrisa','dun_fimoz','krytoi_sosun'],correct:1,explain:'pashatikrisa = «паша ты крыса» — прямое оскорбление игрока.'},
+  {cat:'nick',catLabel:'Тип ника',catClass:'cat-nick',type:'choice',text:'Какой из ников является антиспам-словом (некорректен с любым донатом)?',nick:null,options:['gondon52','bobaebet','delta_bystit_iaa','ya_pidoor007'],correct:2,explain:'delta_bystit_iaa — реклама чита «дельта бустит», бьёт антиспам. Некорректен с любым донатом.'},
+  {cat:'nick',catLabel:'Тип ника',catClass:'cat-nick',type:'choice',text:'Что означает суффикс (-s) в причине бана «некорректный ник -s»?',nick:null,options:['Бан без апелляции','Бан с сохранением инвентаря и прогресса','Бан только аккаунта, без IP','Флаг для ВИП-игроков'],correct:1,explain:'-s означает, что бан выдаётся с сохранением (статистика/инвентарь не сбрасывается).'},
+  {cat:'nick',catLabel:'Тип ника',catClass:'cat-nick',type:'choice',text:'Игрок с ником «nursultan_penit» — что в нике нарушает правила?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'nursultan_penit'},options:['Мат','Название чита («пенит/penit»)','Аморал','Оскорбление игрока'],correct:1,explain:'nursultan_penit содержит название чита «пенит». Некорректен с любым донатом.'},
+  {cat:'nick',catLabel:'Тип ника',catClass:'cat-nick',type:'choice',text:'Чем отличается бан за оригинальный ник от бана за /nick (антиспам)?',nick:null,options:['Никакой разницы — оба навсегда','Оригинальный → навсегда (-s). /nick антиспам → 7 дней (без -s)','Оригинальный → 7 дней. /nick → навсегда','Оба дают бан 7 дней'],correct:1,explain:'Оригинальный некорректный ник (донат < оверлорда) → бан навсегда (-s). /nick с антиспам-словом → бан 7 дней (без -s).'},
+  {cat:'nick',catLabel:'Тип ника',catClass:'cat-nick',type:'choice',text:'[PLAYER] 1228yebanpro12 — почему этот ник некорректный?',nick:{rank:'PLAYER',rankClass:'rank-player',nick:'1228yebanpro12'},options:['Цифры 1228 означают нацизм','Содержит мат «уебан» и донат PLAYER < оверлорда','Аморал','Антиспам-слово'],correct:1,explain:'1228yebanpro12 содержит мат: «уебан». PLAYER (< оверлорда) → бан навсегда (-s).'},
+];
+let questions=[],idx=0,correct=0,wrong=0,streak=0,maxStreak=0,answered=false,activeFilter='all';
+function setFilter(f){activeFilter=f;document.querySelectorAll('.filter-btn').forEach((b,i)=>{const fs=['all','rule','donate','action','example','nick'];b.classList.toggle('active',fs[i]===f);});restart();}
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function restart(){const pool=activeFilter==='all'?Q:Q.filter(q=>q.cat===activeFilter);questions=shuffle(pool);idx=0;correct=0;wrong=0;streak=0;maxStreak=0;answered=false;document.getElementById('resultsScreen').classList.remove('show');document.getElementById('quizArea').style.display='';document.getElementById('filterBar').style.display='';updateStats();render();}
+function updateStats(){document.getElementById('statTotal').textContent=idx;document.getElementById('statCorrect').textContent=correct;document.getElementById('statWrong').textContent=wrong;document.getElementById('statStreak').textContent=streak;document.getElementById('scoreBadge').textContent=`⚡ ${correct} / ${idx}`;const pct=questions.length?Math.round(idx/questions.length*100):0;document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressText').textContent=`Вопрос ${idx+1} из ${questions.length}`;document.getElementById('progressPct').textContent=pct+'%';document.getElementById('qNum').textContent=`${idx+1} / ${questions.length}`;}
+function render(){if(idx>=questions.length){showResults();return;}answered=false;const q=questions[idx];document.getElementById('questionCard').className='question-card';document.getElementById('categoryTag').className='category-tag '+q.catClass;document.getElementById('categoryTag').textContent=q.catLabel;document.getElementById('questionText').textContent=q.text;document.getElementById('feedback').className='feedback';document.getElementById('feedback').innerHTML='';document.getElementById('nextBtn').className='next-btn';const na=document.getElementById('nickArea');if(q.nick){na.innerHTML=`<div class="nick-display"><span class="nick-rank ${q.nick.rankClass}">${q.nick.rank}</span><span class="nick-text">${q.nick.nick}</span></div>`;}else{na.innerHTML='';}const area=document.getElementById('answerArea');area.innerHTML='';const grid=document.createElement('div');grid.className='choices';const L=['А','Б','В','Г'];q.options.forEach((opt,i)=>{const btn=document.createElement('button');btn.className='choice-btn';btn.innerHTML=`<span class="choice-letter">${L[i]}</span>${opt}`;btn.onclick=()=>handleChoice(i,q.correct,q.explain,btn,grid.querySelectorAll('.choice-btn'));grid.appendChild(btn);});area.appendChild(grid);updateStats();}
+function handleChoice(sel,cor,explain,btn,all){if(answered)return;answered=true;all.forEach((b,i)=>{b.disabled=true;if(i===cor)b.classList.add('reveal');});if(sel===cor){btn.classList.add('sel-correct');correct++;streak++;maxStreak=Math.max(maxStreak,streak);fb(true,explain);document.getElementById('questionCard').classList.add('correct-card');}else{btn.classList.add('sel-wrong');wrong++;streak=0;fb(false,explain,all[cor].textContent.slice(1).trim());document.getElementById('questionCard').classList.add('wrong-card');}document.getElementById('nextBtn').classList.add('show');}
+function fb(ok,explain,ans=''){const el=document.getElementById('feedback');if(ok){el.className='feedback fb-correct show';el.innerHTML=`✅ <strong>Верно!</strong> ${explain}`;}else{el.className='feedback fb-wrong show';el.innerHTML=`❌ <strong>Неверно.</strong> ${explain}${ans?` <span class="ans"> → ${ans}</span>`:''}`}}
+function nextQ(){idx++;render();}
+function showResults(){document.getElementById('quizArea').style.display='none';document.getElementById('filterBar').style.display='none';const total=correct+wrong,pct=total?Math.round(correct/total*100):0;let emoji='😬',title='Стоит повторить';if(pct>=90){emoji='🏆';title='Эксперт по никам!';}else if(pct>=75){emoji='🎯';title='Хорошая работа!';}else if(pct>=50){emoji='📚';title='Нужно ещё потренироваться';}document.getElementById('resEmoji').textContent=emoji;document.getElementById('resTitle').textContent=title;document.getElementById('resSub').textContent=`Точность: ${pct}% · Рекорд серии: ${maxStreak} подряд`;document.getElementById('rC').textContent=correct;document.getElementById('rW').textContent=wrong;document.getElementById('rP').textContent=pct+'%';document.getElementById('resultsScreen').classList.add('show');document.getElementById('progressFill').style.width='100%';document.getElementById('progressText').textContent='Тест завершён!';document.getElementById('progressPct').textContent=pct+'%';document.getElementById('scoreBadge').textContent=`✅ ${correct} / ${total}`;}
+restart();
+</script>
+</body>
+</html>
