@@ -598,6 +598,16 @@
   .question-card { animation: cardIn 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
 
   /* ─── SCORE BADGE ─── */
+  .back-btn {
+    position: fixed; top: 16px; left: 16px; z-index: 100;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 100px; padding: 8px 16px;
+    font-family: 'Onest', sans-serif; font-size: 12px; font-weight: 600;
+    color: var(--muted); text-decoration: none;
+    display: flex; align-items: center; gap: 6px; transition: all .2s;
+  }
+  .back-btn:hover { border-color: var(--accent); color: var(--accent3); }
+
   .score-badge {
     position: fixed;
     top: 20px;
@@ -628,6 +638,7 @@
 </head>
 <body>
 
+<a class="back-btn" href="index.html">← Назад</a>
 <div class="score-badge" id="scoreBadge">⚡ 0 / 0</div>
 
 <div class="container">
