@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RW Тренажёр | Обучение персонала</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Onest:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #7c3aed;
+    --accent2: #a855f7;
+    --accent3: #c084fc;
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f97316;
+    --yellow: #eab308;
+    --text: #f0f0f8;
+    --muted: #6b6b88;
+    --card: #13131e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Onest', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,58,237,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,58,237,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: -40%;
+    left: -20%;
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(ellipse, rgba(124,58,237,0.12) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    padding: 40px 0 32px;
+    text-align: center;
+    position: relative;
+  }
+
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(124,58,237,0.15);
+    border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .header h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(26px, 5vw, 42px);
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #fff 0%, var(--accent3) 60%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  .header p {
+    color: var(--muted);
+    font-size: 15px;
+    font-weight: 400;
+  }
+
+  /* ─── STATS BAR ─── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    text-align: center;
+    transition: border-color 0.3s;
+  }
+
+  .stat-val {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .stat.correct .stat-val { color: var(--green); }
+  .stat.wrong .stat-val { color: var(--red); }
+  .stat.streak .stat-val { color: var(--orange); }
+  .stat.total .stat-val { color: var(--accent3); }
+
+  /* ─── PROGRESS ─── */
+  .progress-wrap {
+    margin-bottom: 28px;
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .progress-bar {
+    height: 6px;
+    background: var(--bg3);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 100px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--accent2);
+  }
+
+  /* ─── QUESTION CARD ─── */
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .question-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), transparent);
+    border-radius: 20px 20px 0 0;
+  }
+
+  .question-card.correct-card { border-color: rgba(34,197,94,0.4); }
+  .question-card.wrong-card { border-color: rgba(239,68,68,0.4); }
+
+  .category-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+  }
+
+  .cat-ban { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+  .cat-mut { background: rgba(234,179,8,0.12); color: #fbbf24; border: 1px solid rgba(234,179,8,0.2); }
+  .cat-nik { background: rgba(124,58,237,0.12); color: var(--accent3); border: 1px solid rgba(124,58,237,0.2); }
+  .cat-logic { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+  .cat-special { background: rgba(249,115,22,0.12); color: #fb923c; border: 1px solid rgba(249,115,22,0.2); }
+
+  .q-number {
+    position: absolute;
+    top: 28px;
+    right: 28px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  .question-text {
+    font-size: 17px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .chat-msg {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-family: 'Onest', monospace;
+    font-size: 14px;
+    color: #c8c8e0;
+    margin-top: 12px;
+    margin-bottom: 4px;
+    line-height: 1.5;
+  }
+
+  .chat-msg .nick { color: var(--accent3); font-weight: 600; }
+  .chat-msg .msg { color: #e0e0f0; }
+
+  /* ─── ANSWER TYPES ─── */
+
+  /* Multiple choice */
+  .choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .choice-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: var(--text);
+    font-family: 'Onest', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .choice-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(124,58,237,0.08);
+    transform: translateY(-1px);
+  }
+
+  .choice-btn.selected-correct {
+    background: rgba(34,197,94,0.12);
+    border-color: rgba(34,197,94,0.5);
+    color: #4ade80;
+  }
+
+  .choice-btn.selected-wrong {
+    background: rgba(239,68,68,0.12);
+    border-color: rgba(239,68,68,0.5);
+    color: #f87171;
+  }
+
+  .choice-btn.reveal-correct {
+    background: rgba(34,197,94,0.08);
+    border-color: rgba(34,197,94,0.3);
+    color: #4ade80;
+  }
+
+  .choice-btn:disabled { cursor: not-allowed; }
+
+  .choice-letter {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    border-radius: 7px;
+    background: rgba(124,58,237,0.15);
+    border: 1px solid rgba(124,58,237,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--accent3);
+  }
+
+  /* Input type */
+  .input-area {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .input-hint {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .answer-inputs {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .time-input-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px 12px 4px 4px;
+    transition: border-color 0.2s;
+  }
+
+  .time-input-group:focus-within {
+    border-color: var(--accent);
+  }
+
+  .time-input {
+    width: 70px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    padding: 8px 4px 8px 10px;
+    text-align: center;
+  }
+
+  .time-input::placeholder { color: var(--muted); font-weight: 400; font-size: 13px; }
+
+  .time-unit {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .submit-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 12px;
+    padding: 14px 28px;
+    color: white;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+    align-self: flex-start;
+    margin-top: 4px;
+  }
+
+  .submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(124,58,237,0.45);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ─── FEEDBACK ─── */
+  .feedback {
+    margin-top: 16px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    display: none;
+    animation: fadeSlideUp 0.3s ease;
+  }
+
+  .feedback.show { display: block; }
+
+  .feedback.correct-fb {
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.3);
+    color: #4ade80;
+  }
+
+  .feedback.wrong-fb {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #f87171;
+  }
+
+  .feedback strong { font-weight: 700; }
+  .feedback .correct-answer { color: #4ade80; font-family: 'Unbounded', sans-serif; font-size: 13px; }
+
+  /* ─── NEXT BUTTON ─── */
+  .next-btn {
+    display: none;
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    color: var(--text);
+    font-family: 'Onest', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    margin-top: 12px;
+  }
+
+  .next-btn.show { display: block; }
+
+  .next-btn:hover {
+    background: rgba(124,58,237,0.12);
+    border-color: var(--accent);
+    color: var(--accent3);
+  }
+
+  /* ─── RESULTS SCREEN ─── */
+  .results-screen {
+    display: none;
+    text-align: center;
+    padding: 40px 0;
+  }
+
+  .results-screen.show { display: block; }
+
+  .results-emoji {
+    font-size: 72px;
+    margin-bottom: 16px;
+    display: block;
+    animation: bounce 0.6s ease;
+  }
+
+  .results-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 32px;
+    font-weight: 900;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #fff, var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .results-subtitle {
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 40px;
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .result-stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 16px;
+  }
+
+  .result-stat-val {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 36px;
+    font-weight: 900;
+    margin-bottom: 6px;
+  }
+
+  .result-stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .restart-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 14px;
+    padding: 16px 40px;
+    color: white;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: all 0.2s;
+    box-shadow: 0 4px 24px rgba(124,58,237,0.35);
+  }
+
+  .restart-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 32px rgba(124,58,237,0.5);
+  }
+
+  /* ─── CATEGORY FILTER ─── */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .filter-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Onest', sans-serif;
+  }
+
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent3); }
+  .filter-btn.active { background: rgba(124,58,237,0.15); border-color: var(--accent); color: var(--accent3); }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-16px); }
+    70% { transform: translateY(-6px); }
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .question-card { animation: cardIn 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+
+  /* ─── SCORE BADGE ─── */
+  .score-badge {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 8px 16px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent3);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ─── MOBILE ─── */
+  @media (max-width: 600px) {
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .choices { grid-template-columns: 1fr; }
+    .results-grid { grid-template-columns: repeat(2, 1fr); }
+    .question-card { padding: 22px 18px; }
+    .q-number { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="score-badge" id="scoreBadge">⚡ 0 / 0</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-badge">🛡️ ReallyWorld · Обучение персонала</div>
+    <h1>Тренажёр модератора</h1>
+    <p>Проверь знание правил и наказаний</p>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat total">
+      <div class="stat-val" id="statTotal">0</div>
+      <div class="stat-label">Вопросов</div>
+    </div>
+    <div class="stat correct">
+      <div class="stat-val" id="statCorrect">0</div>
+      <div class="stat-label">Верно</div>
+    </div>
+    <div class="stat wrong">
+      <div class="stat-val" id="statWrong">0</div>
+      <div class="stat-label">Ошибок</div>
+    </div>
+    <div class="stat streak">
+      <div class="stat-val" id="statStreak">0</div>
+      <div class="stat-label">Серия 🔥</div>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-info">
+      <span id="progressText">Вопрос 1 из 40</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="filter-bar" id="filterBar">
+    <button class="filter-btn active" onclick="setFilter('all')">Все</button>
+    <button class="filter-btn" onclick="setFilter('mut')">Муты</button>
+    <button class="filter-btn" onclick="setFilter('ban')">Баны</button>
+    <button class="filter-btn" onclick="setFilter('nik')">Ники</button>
+    <button class="filter-btn" onclick="setFilter('logic')">Ситуации</button>
+    <button class="filter-btn" onclick="setFilter('special')">Особые</button>
+  </div>
+
+  <!-- Question -->
+  <div id="quizArea">
+    <div class="question-card" id="questionCard">
+      <span class="q-number" id="qNumber">1 / 40</span>
+      <div class="category-tag" id="categoryTag"></div>
+      <div class="question-text" id="questionText"></div>
+      <div id="chatMsgArea"></div>
+      <div id="answerArea"></div>
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Следующий вопрос →</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-screen" id="resultsScreen">
+    <span class="results-emoji" id="resultsEmoji">🏆</span>
+    <div class="results-title" id="resultsTitle">Тест завершён!</div>
+    <div class="results-subtitle" id="resultsSubtitle"></div>
+    <div class="results-grid">
+      <div class="result-stat">
+        <div class="result-stat-val" id="rCorrect" style="color: var(--green)">0</div>
+        <div class="result-stat-label">Верных</div>
+      </div>
+      <div class="result-stat">
+        <div class="result-stat-val" id="rWrong" style="color: var(--red)">0</div>
+        <div class="result-stat-label">Ошибок</div>
+      </div>
+      <div class="result-stat">
+        <div class="result-stat-val" id="rPct" style="color: var(--accent3)">0%</div>
+        <div class="result-stat-label">Точность</div>
+      </div>
+    </div>
+    <button class="restart-btn" onclick="restart()">🔄 Пройти снова</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// QUESTION BANK
+// type: 'choice' | 'input'
+// For input: answer can be string like "4ч", "15д", "навсегда", "2д" etc.
+// For choice: options array, correct index
+// ─────────────────────────────────────────
+const ALL_QUESTIONS = [
+  // ═══ МУТЫ ═══
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'choice',
+    text: 'Игрок написал 3 раза одно и то же сообщение за минуту. Какое наказание?',
+    chat: '[14:24] artemplay: продам алмазы\n[14:44] artemplay: продам алмазы\n[15:03] artemplay: продам алмазы',
+    options: ['Мут 2ч', 'Мут 4ч', 'Мут 6ч', 'Нет нарушения'],
+    correct: 1,
+    explain: 'Флуд — одинаковый смысл сообщений в течение минуты → мут 4ч.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'input',
+    text: 'Игрок написал 2 сообщения в глобальный чат и 1 на спавне с одинаковым смыслом. Сколько часов мута?',
+    chat: null,
+    unit: 'ч',
+    answer: '4',
+    explain: 'Глобал + спавн считается как флуд. Мут 4ч.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'choice',
+    text: 'Игрок написал в /bc то же сообщение что уже написал 2 раза в глобальный чат. Какое наказание?',
+    chat: '[22:57] bifaf: Кто пвп, тп на /warp ezzki\n[22:59] bifaf: Кто пвп, тп на /warp ezzki\n[23:13] [ОБЪЯВЛЕНИЕ] bifaf: Кто пвп, тп на /warp ezzki',
+    options: ['Мут 4ч (флуд)', 'Мут 6ч (обход флуда)', 'Мут 12ч', 'Нет нарушения'],
+    correct: 1,
+    explain: 'Попытка обойти флуд через /bc → мут 6ч за обход флуда.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'input',
+    text: 'Игрок пишет: «хахахахаха» (10 символов смеха). Сколько часов мута?',
+    chat: null,
+    unit: 'ч',
+    answer: '4',
+    explain: 'Флуд символами (10+ бессмысленных символов) → мут 4ч.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'choice',
+    text: 'Игрок написал «#дайтемнесетнезерки». Какое наказание?',
+    chat: null,
+    options: ['Мут 4ч (флуд символами)', 'Мут 6ч (обход флуда символами)', 'Нет нарушения', 'Мут 12ч'],
+    correct: 1,
+    explain: 'Хэштег — это обход флуда символами → мут 6ч.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'choice',
+    text: 'Фраза «всем приветттттттттт» — это флуд символами?',
+    chat: null,
+    options: ['Да, мут 4ч', 'Нет, нарушения нет'],
+    correct: 1,
+    explain: 'Бессмысленных символов всего 9 (буква «т» осмысленна в конце слова) — меньше 10, нарушения нет.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'choice',
+    text: 'Предложение «ВСЕ тп НА варп» — это капс?',
+    chat: null,
+    options: ['Да, мут 4ч', 'Нет — меньше 50% слов в капсе', 'Нет — меньше 3 слов'],
+    correct: 0,
+    explain: '3 слова, 2 из 3 в капсе = 66% → капс. Мут 4ч.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'choice',
+    text: 'Фраза «КИНЬ мне тп» — нарушение?',
+    chat: null,
+    options: ['Да, капс — мут 4ч', 'Нет нарушения'],
+    correct: 1,
+    explain: 'Предложение должно быть от 3 слов. Здесь 3 слова, но только 1 из 3 в капсе — менее 50%, нарушения нет.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'input',
+    text: '«сука блять нахуй я пошел пвп» — 3 мата в одном сообщении. Сколько часов мута?',
+    chat: null,
+    unit: 'ч',
+    answer: '3',
+    explain: 'Чрезмерное употребление нецензурной лексики (≥3 матов) → мут 3ч.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'choice',
+    text: 'Игрок написал «хуй тебе». Какое нарушение?',
+    chat: null,
+    options: ['Аморальное поведение — мут 3ч', 'Оскорбительное поведение — мут 4ч', 'Нет нарушения', 'Чрезмерный мат — мут 3ч'],
+    correct: 0,
+    explain: '«Хуй» — аморальное поведение → мут 3ч.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'choice',
+    text: 'Игрок написал: «Ты долбоёб». Какое наказание?',
+    chat: null,
+    options: ['Мут 4ч — оск. поведение', 'Мут 3ч — нецензурная лексика', 'Нет нарушения', 'Мут 12ч'],
+    correct: 0,
+    explain: 'Оскорбительное поведение → мут 4ч.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'choice',
+    text: 'Что делать с игроком, написавшим «кто читер + в чат»?',
+    chat: null,
+    options: ['Мут 4ч — организация флуда', 'Бан 4 дня — провокация', 'Нет нарушения', 'Мут 6ч'],
+    correct: 1,
+    explain: '«Кто читер + в чат» — провокация на нарушение правил → бан 4 дня.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'choice',
+    text: 'Игрок написал «хочу ебаться». Какое наказание?',
+    chat: null,
+    options: ['Мут 3ч — аморальное поведение', 'Мут 4ч — оскорбительное поведение', 'Мут 12ч — неадекватное поведение', 'Нет нарушения'],
+    correct: 0,
+    explain: 'Сексуальный контекст → аморальное поведение → мут 3ч.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'input',
+    text: 'Некорректное упоминание родных («Твоя мама», «Сын трактора» и т.п.). Сколько ДНЕЙ мута?',
+    chat: null,
+    unit: 'дней',
+    answer: '5',
+    explain: 'Некорректное упоминание родных → мут 5 дней.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'input',
+    text: 'Игрок написал: «Я твою мать ебал». Сколько ДНЕЙ мута?',
+    chat: null,
+    unit: 'дней',
+    answer: '15',
+    explain: 'Прямое оскорбление родных → мут 15 дней.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'input',
+    text: 'Публичная критика проекта («Клоунский проект»). Сколько ДНЕЙ мута?',
+    chat: null,
+    unit: 'дней',
+    answer: '3',
+    explain: 'Публичная критика проекта → мут 3 дня.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'choice',
+    text: 'Игрок написал в чате «Иди в окно выкинься». Что выдаём?',
+    chat: null,
+    options: ['Мут 4ч — оск. поведение', 'Мут 6ч — призыв к суициду', 'Бан 3д', 'Мут 12ч'],
+    correct: 1,
+    explain: 'Призыв к суициду → мут 6ч.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'choice',
+    text: 'Игрок написал «Go na pt ezz». Что выдаём?',
+    chat: null,
+    options: ['Нет нарушения', 'Мут 2ч — упоминание стороннего проекта', 'Мут 4ч — флуд', 'Бан 1 день'],
+    correct: 1,
+    explain: '«pt» — сокращение стороннего проекта → мут 2ч.'
+  },
+  {
+    cat: 'mut', catLabel: 'Мут', catClass: 'cat-mut',
+    type: 'input',
+    text: 'Игрок 7 раз одним сообщением пишет «СВО». Сколько ДНЕЙ мута?',
+    chat: null,
+    unit: 'дней',
+    answer: '2',
+    explain: 'СВО — политическая агитация (лёгкая) → мут 2 дня.'
+  },
+
+  // ═══ БАНЫ ═══
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'input',
+    text: 'Игрок написал IP другого сервера в чат. Сколько дней бана?',
+    chat: null,
+    unit: 'дней',
+    answer: 'навсегда',
+    inputType: 'text',
+    explain: 'Любой IP в чате = попытка взлома → бан навсегда.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'choice',
+    text: 'Игрок написал «Слава Гитлеру». Какой бан?',
+    chat: null,
+    options: ['Бан 2 дня', 'Бан 3 дня', 'Бан 7 дней', 'Бан 30 дней'],
+    correct: 1,
+    explain: 'Пропаганда нацизма → бан 3 дня.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'choice',
+    text: 'Игрок написал «Путин/Зеленский хуесос». Какой бан?',
+    chat: null,
+    options: ['Бан 2 дня', 'Бан 3 дня', 'Бан 7 дней', 'Мут 2 дня'],
+    correct: 2,
+    explain: 'Грубая политическая агитация → бан 7 дней.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'choice',
+    text: 'Игрок написал «Россия лучше Украины». Какой бан?',
+    chat: null,
+    options: ['Мут 2 дня', 'Бан 3 дня', 'Бан 7 дней', 'Нет нарушения'],
+    correct: 1,
+    explain: 'Политическая агитация средней тяжести → бан 3 дня.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'input',
+    text: 'Игрок написал «Оскорбление родных» в адрес модератора. Сколько дней бана?',
+    chat: null,
+    unit: 'дней',
+    answer: '20',
+    explain: 'Оскорбление родных администрации → бан 20 дней.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'choice',
+    text: 'Игрок написал «Модер лох». Это слабое или грубое оскорбление адм.?',
+    chat: null,
+    options: ['Слабое — бан 5 дней', 'Грубое — бан 15 дней', 'Шутка/рофл — бан 2 дня', 'Мут 12ч'],
+    correct: 0,
+    explain: '«Модер лох» — слабое оскорбление администрации → бан 5 дней.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'choice',
+    text: 'Игрок написал «Модер лох ебанный». Какой бан?',
+    chat: null,
+    options: ['Бан 5 дней (слабое)', 'Бан 15 дней (грубое)', 'Бан 2 дня (шутки/рофлы)', 'Мут 12ч'],
+    correct: 1,
+    explain: 'Грубое оскорбление администрации → бан 15 дней.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'choice',
+    text: 'Игрок написал «bifaf го секс». Это что?',
+    chat: null,
+    options: ['Оскорбление адм. — бан 5д', 'Шутки/рофлы в сторону адм. — бан 2д', 'Аморальное поведение — мут 3ч', 'Нет нарушения'],
+    correct: 1,
+    explain: 'Шутки/рофлы в сторону администрации → бан 2 дня.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'input',
+    text: 'Игрок написал «я хелпер, я щас тебя замучу». Сколько дней бана?',
+    chat: null,
+    unit: 'дней',
+    answer: '3',
+    explain: 'Выдача себя за администрацию → бан 3 дня.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'choice',
+    text: 'Игрок отправил в чат вредоносную ссылку (любую). Какой бан?',
+    chat: null,
+    options: ['Бан 5 дней', 'Бан 7 дней', 'Бан 14 дней', 'Бан 30 дней'],
+    correct: 2,
+    explain: 'Распространение вредоносных ссылок (любых) → бан 14 дней.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'input',
+    text: 'Игрок написал «продам акк с хиро». Сколько дней бана?',
+    chat: null,
+    unit: 'дней',
+    answer: 'навсегда',
+    inputType: 'text',
+    explain: 'Попытка продажи аккаунта → бан навсегда.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'choice',
+    text: 'Игрок написал «обменяю д5 на акк в бравл старсе». Какой бан?',
+    chat: null,
+    options: ['Бан 2 дня', 'Бан 4 дня — бартер', 'Бан 7 дней', 'Нет нарушения — игровые предметы'],
+    correct: 1,
+    explain: 'Бартер между играми → бан 4 дня.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'choice',
+    text: 'Игрок написал «Рилик хуйня ебаная». Какой бан?',
+    chat: null,
+    options: ['Мут 3 дня', 'Бан 5 дней', 'Бан 15 дней', 'Бан 30 дней'],
+    correct: 3,
+    explain: 'Оскорбление проекта → бан 30 дней.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'input',
+    text: 'Игрок написал «Уёбок жди, я тебя задокшу». Сколько дней бана?',
+    chat: null,
+    unit: 'дней',
+    answer: '30',
+    explain: 'Угроза доксом → бан 30 дней.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'choice',
+    text: 'Игрок написал «мой дс nickname, добавляй». Какой бан?',
+    chat: null,
+    options: ['Бан 1 день', 'Бан 2 дня', 'Мут 2ч', 'Нет нарушения'],
+    correct: 1,
+    explain: 'Упоминание ДС/ТГ контактов в чате → бан 2 дня.'
+  },
+  {
+    cat: 'ban', catLabel: 'Бан', catClass: 'cat-ban',
+    type: 'choice',
+    text: 'Игрок написал «Хочу взорвать школу». Какой бан?',
+    chat: null,
+    options: ['Бан 3 дня', 'Бан 5 дней', 'Бан 7 дней', 'Бан 14 дней'],
+    correct: 2,
+    explain: 'Пропаганда терроризма → бан 7 дней.'
+  },
+
+  // ═══ НИКИ ═══
+  {
+    cat: 'nik', catLabel: 'Ники', catClass: 'cat-nik',
+    type: 'choice',
+    text: 'У игрока с привилегией PLAYER ник «ya_pidoor007». Что делаем?',
+    chat: null,
+    options: ['Предупреждение, потом бан 1ч', 'Бан навсегда (-s)', 'Нет нарушения — это ник', 'Мут 4ч'],
+    correct: 1,
+    explain: 'Оригинальный некорректный ник + донат ниже оверлорда → бан навсегда (-s).'
+  },
+  {
+    cat: 'nik', catLabel: 'Ники', catClass: 'cat-nik',
+    type: 'choice',
+    text: 'Игрок с DRAGON поставил через /nick ник «RWMODERI_HUESOSI». Что делаем?',
+    chat: null,
+    options: ['Предупреждение, дать 5 минут', 'Нет нарушения — у него Дракон', 'Сразу бан за оск. адм.', 'Бан навсегда (-s)'],
+    correct: 2,
+    explain: 'Оскорбление администрации в нике — некорректный с ЛЮБЫМ донатом → баним сразу, без предупреждений.'
+  },
+  {
+    cat: 'nik', catLabel: 'Ники', catClass: 'cat-nik',
+    type: 'choice',
+    text: 'У игрока с OVERLORD ником ник «dun_fimoz». Он некорректный?',
+    chat: null,
+    options: ['Да — мат, баним', 'Нет — донат оверлорд и выше освобождает'],
+    correct: 1,
+    explain: 'Донат оверлорд и выше освобождает от правил «мат/аморал/оск. игрока». «Фимоз» — аморал, но донат выше оверлорда — нарушения нет.'
+  },
+  {
+    cat: 'nik', catLabel: 'Ники', catClass: 'cat-nik',
+    type: 'choice',
+    text: 'Игрок поставил /nick и его ник — слово, за которое бьёт антиспам (Sunrise). Что делаем?',
+    chat: null,
+    options: ['Предупреждение, дать 5 минут', '/realname → скрин → /nick off → бан 7 дней', 'Бан навсегда (-s)', 'Нет нарушения'],
+    correct: 1,
+    explain: 'Антиспам-слово в /nick: /realname → фотофиксация → /nick off → бан 7 дней (без -s).'
+  },
+  {
+    cat: 'nik', catLabel: 'Ники', catClass: 'cat-nik',
+    type: 'choice',
+    text: 'Игрок установил /nick «delta_bystit». Это некорректный ник при любом донате?',
+    chat: null,
+    options: ['Да — реклама чита/антиспам-слово', 'Нет — донат оверлорд освобождает'],
+    correct: 0,
+    explain: 'Реклама/упоминание чита в нике — некорректный с ЛЮБЫМ донатом, даже Дракон.'
+  },
+
+  // ═══ СИТУАЦИИ ═══
+  {
+    cat: 'logic', catLabel: 'Ситуация', catClass: 'cat-logic',
+    type: 'choice',
+    text: 'Игрок написал «Мамой клянись что это не обман». Это нарушение?',
+    chat: null,
+    options: ['Да — некорректное упоминание родных', 'Нет нарушения'],
+    correct: 1,
+    explain: '«Мамой клянись» — устойчивое выражение, нарушения нет.'
+  },
+  {
+    cat: 'logic', catLabel: 'Ситуация', catClass: 'cat-logic',
+    type: 'choice',
+    text: '6 игроков написали «F» после того как кому-то выпало 15к рилликов. Что делаем?',
+    chat: null,
+    options: ['Мутим всех 4ч — участники массового флуда', 'Нет нарушения — исключение после события', 'Мутим только первого', 'Предупреждение'],
+    correct: 0,
+    explain: '6+ игроков с одним сообщением — массовый флуд → мут 4ч каждому «участник массового флуда».'
+  },
+  {
+    cat: 'logic', catLabel: 'Ситуация', catClass: 'cat-logic',
+    type: 'choice',
+    text: 'Игрок написал «+босс» сразу после ивента. Это флуд?',
+    chat: null,
+    options: ['Да — флуд символами', 'Нет — исключение после ивента'],
+    correct: 1,
+    explain: '«+босс», «+тал» после ивента — исключение, не мутим.'
+  },
+  {
+    cat: 'logic', catLabel: 'Ситуация', catClass: 'cat-logic',
+    type: 'choice',
+    text: 'Игрок xleb написал «кому кит дракона + в чат», 6 человек ответили «+». Что делаем?',
+    chat: null,
+    options: [
+      'Мутим xleb 4ч, ответивших тоже',
+      'Мутим xleb 6ч (орг. масс. флуда), ответивших НЕ мутим',
+      'Мутим всех 4ч',
+      'Нет нарушения'
+    ],
+    correct: 1,
+    explain: '6+ ответов → организация массового флуда. Организатор получает 6ч, ответившие — без наказания.'
+  },
+  {
+    cat: 'logic', catLabel: 'Ситуация', catClass: 'cat-logic',
+    type: 'choice',
+    text: 'Игрок написал «ез — хелпер» после победы в пвп. Это нарушение?',
+    chat: null,
+    options: ['Да — шутки/рофлы в сторону адм. — бан 2д', 'Нет нарушения'],
+    correct: 1,
+    explain: 'После пвп/дуэли «ез хелпер/модер» — нарушения нет. Исключение.'
+  },
+
+  // ═══ ОСОБЫЕ ═══
+  {
+    cat: 'special', catLabel: 'Особое', catClass: 'cat-special',
+    type: 'choice',
+    text: 'Игрок написал «продам акк» в клан-чате. Что делаем?',
+    chat: null,
+    options: ['Нет нарушения — клан-чат исключение', 'Бан навсегда — попытка продажи аккаунта'],
+    correct: 1,
+    explain: 'Попытка продажи/передачи аккаунта — нарушение в ЛЮБОМ виде чата.'
+  },
+  {
+    cat: 'special', catLabel: 'Особое', catClass: 'cat-special',
+    type: 'choice',
+    text: 'Игрок написал в /bc: «ПРОДАМ АКК С БАННИ ЗА 1К РУБЛЕЙ». Что делаем?',
+    chat: null,
+    options: ['Бан 1 день — нек. /bc', 'Бан 4 дня — нек. /bc', 'Бан навсегда — попытка продажи', 'Мут'],
+    correct: 2,
+    explain: 'Контекст объявления нарушает правило с более строгим баном → баним по этому правилу (навсегда).'
+  },
+  {
+    cat: 'special', catLabel: 'Особое', catClass: 'cat-special',
+    type: 'choice',
+    text: 'Игрок признался «Я читер (рофл)». Баним?',
+    chat: null,
+    options: ['Да — бан 10 дней', 'Нет — приписка «рофл» освобождает'],
+    correct: 1,
+    explain: '«Я читер (рофл)» — не баним. Без приписки «рофл» — бан 10 дней.'
+  },
+  {
+    cat: 'special', catLabel: 'Особое', catClass: 'cat-special',
+    type: 'choice',
+    text: 'Игрок написал «Alt+F4 all». Что выдаём?',
+    chat: null,
+    options: ['Мут 4ч — оск. поведение', 'Мут 6ч — внеигровой обман', 'Бан 1 день', 'Нет нарушения'],
+    correct: 1,
+    explain: 'Внеигровой обман (Alt+F4, F3+C и т.п.) → мут 6ч.'
+  },
+  {
+    cat: 'special', catLabel: 'Особое', catClass: 'cat-special',
+    type: 'choice',
+    text: 'Игрок написал «Скиньте 100р на киви». Какое наказание?',
+    chat: null,
+    options: ['Мут 1 день', 'Мут 2 дня', 'Бан 2 дня', 'Нет нарушения'],
+    correct: 1,
+    explain: 'Денежные операции с реальной валютой → мут 2 дня.'
+  },
+  {
+    cat: 'special', catLabel: 'Особое', catClass: 'cat-special',
+    type: 'choice',
+    text: 'Игрок написал «Хелпер сними мут с моего друга». Что выдаём?',
+    chat: null,
+    options: ['Нет нарушения', 'Мут 2ч — выпрашивание снятия наказания', 'Мут 4ч', 'Предупреждение'],
+    correct: 1,
+    explain: 'Выпрашивание снятия/выдачи наказания → мут 2ч (кроме MrDomer).'
+  },
+];
+
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+let questions = [];
+let currentIndex = 0;
+let correct = 0;
+let wrong = 0;
+let streak = 0;
+let maxStreak = 0;
+let answered = false;
+let activeFilter = 'all';
+
+function setFilter(f) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach((b, i) => {
+    const filters = ['all','mut','ban','nik','logic','special'];
+    b.classList.toggle('active', filters[i] === f);
+  });
+  restart();
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function restart() {
+  const pool = activeFilter === 'all' ? ALL_QUESTIONS : ALL_QUESTIONS.filter(q => q.cat === activeFilter);
+  questions = shuffle(pool);
+  currentIndex = 0; correct = 0; wrong = 0; streak = 0; maxStreak = 0; answered = false;
+  document.getElementById('resultsScreen').classList.remove('show');
+  document.getElementById('quizArea').style.display = '';
+  document.getElementById('filterBar').style.display = '';
+  updateStats();
+  renderQuestion();
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = currentIndex;
+  document.getElementById('statCorrect').textContent = correct;
+  document.getElementById('statWrong').textContent = wrong;
+  document.getElementById('statStreak').textContent = streak;
+  document.getElementById('scoreBadge').textContent = `⚡ ${correct} / ${currentIndex}`;
+
+  const pct = questions.length ? Math.round(currentIndex / questions.length * 100) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `Вопрос ${currentIndex + 1} из ${questions.length}`;
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('qNumber').textContent = `${currentIndex + 1} / ${questions.length}`;
+}
+
+function renderQuestion() {
+  if (currentIndex >= questions.length) { showResults(); return; }
+  answered = false;
+  const q = questions[currentIndex];
+
+  const card = document.getElementById('questionCard');
+  card.className = 'question-card';
+
+  document.getElementById('categoryTag').className = 'category-tag ' + q.catClass;
+  document.getElementById('categoryTag').textContent = q.catLabel;
+  document.getElementById('questionText').textContent = q.text;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('nextBtn').className = 'next-btn';
+
+  // Chat message
+  const chatArea = document.getElementById('chatMsgArea');
+  if (q.chat) {
+    chatArea.innerHTML = '<div class="chat-msg">' + q.chat.split('\n').map(line => {
+      const m = line.match(/^(\[[^\]]+\] [^ ]+): (.+)$/);
+      if (m) return `<span class="nick">${m[1]}:</span> <span class="msg">${m[2]}</span>`;
+      return `<span class="msg">${line}</span>`;
+    }).join('<br>') + '</div>';
+  } else {
+    chatArea.innerHTML = '';
+  }
+
+  // Answer area
+  const area = document.getElementById('answerArea');
+  area.innerHTML = '';
+
+  if (q.type === 'choice') {
+    const grid = document.createElement('div');
+    grid.className = 'choices';
+    const letters = ['А', 'Б', 'В', 'Г'];
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = `<span class="choice-letter">${letters[i]}</span>${opt}`;
+      btn.onclick = () => handleChoice(i, q.correct, q.explain, btn, grid.querySelectorAll('.choice-btn'));
+      grid.appendChild(btn);
+    });
+    area.appendChild(grid);
+  } else {
+    // Input
+    const wrap = document.createElement('div');
+    wrap.className = 'input-area';
+    const hint = document.createElement('div');
+    hint.className = 'input-hint';
+    hint.textContent = q.inputType === 'text'
+      ? 'Введи ответ (например: навсегда)'
+      : `Введи число (${q.unit})`;
+    wrap.appendChild(hint);
+
+    const row = document.createElement('div');
+    row.className = 'answer-inputs';
+
+    const group = document.createElement('div');
+    group.className = 'time-input-group';
+
+    const inp = document.createElement('input');
+    inp.className = 'time-input';
+    inp.type = q.inputType === 'text' ? 'text' : 'number';
+    inp.min = '0';
+    inp.placeholder = q.inputType === 'text' ? 'навсегда' : '?';
+    inp.id = 'mainInput';
+    group.appendChild(inp);
+
+    const unit = document.createElement('span');
+    unit.className = 'time-unit';
+    unit.textContent = q.unit;
+    group.appendChild(unit);
+    row.appendChild(group);
+    wrap.appendChild(row);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'submit-btn';
+    submitBtn.textContent = 'Проверить';
+    submitBtn.onclick = () => handleInput(inp.value.trim(), q.answer, q.unit, q.explain, inp, submitBtn);
+    wrap.appendChild(submitBtn);
+
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !answered) {
+        submitBtn.click();
+      }
+    });
+
+    area.appendChild(wrap);
+  }
+
+  updateStats();
+}
+
+function handleChoice(selected, correct_idx, explain, clickedBtn, allBtns) {
+  if (answered) return;
+  answered = true;
+  const isCorrect = selected === correct_idx;
+
+  allBtns.forEach((b, i) => {
+    b.disabled = true;
+    if (i === correct_idx) b.classList.add('reveal-correct');
+  });
+
+  if (isCorrect) {
+    clickedBtn.classList.add('selected-correct');
+    correct++;
+    streak++;
+    maxStreak = Math.max(maxStreak, streak);
+    showFeedback(true, explain);
+    document.getElementById('questionCard').classList.add('correct-card');
+  } else {
+    clickedBtn.classList.add('selected-wrong');
+    wrong++;
+    streak = 0;
+    showFeedback(false, explain, allBtns[correct_idx].textContent.slice(1).trim());
+    document.getElementById('questionCard').classList.add('wrong-card');
+  }
+
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function handleInput(val, expected, unit, explain, inp, btn) {
+  if (answered || !val) return;
+  answered = true;
+  inp.disabled = true;
+  btn.disabled = true;
+
+  const norm = v => v.toLowerCase().replace(/\s/g,'').replace('ч','').replace('дней','').replace('день','').replace('д','').replace('часов','').replace('часа','').replace('час','');
+  const isCorrect = norm(val) === norm(expected) || val.toLowerCase() === expected.toLowerCase();
+
+  if (isCorrect) {
+    inp.style.color = 'var(--green)';
+    inp.parentElement.style.borderColor = 'rgba(34,197,94,0.5)';
+    correct++;
+    streak++;
+    maxStreak = Math.max(maxStreak, streak);
+    showFeedback(true, explain);
+    document.getElementById('questionCard').classList.add('correct-card');
+  } else {
+    inp.style.color = 'var(--red)';
+    inp.parentElement.style.borderColor = 'rgba(239,68,68,0.5)';
+    wrong++;
+    streak = 0;
+    showFeedback(false, explain, `${expected} ${unit}`);
+    document.getElementById('questionCard').classList.add('wrong-card');
+  }
+
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function showFeedback(isCorrect, explain, correctAnswer = null) {
+  const fb = document.getElementById('feedback');
+  if (isCorrect) {
+    fb.className = 'feedback correct-fb show';
+    fb.innerHTML = `✅ <strong>Верно!</strong> ${explain}`;
+  } else {
+    fb.className = 'feedback wrong-fb show';
+    fb.innerHTML = `❌ <strong>Неверно.</strong> ${explain}${correctAnswer ? ` <span class="correct-answer"> → Правильно: ${correctAnswer}</span>` : ''}`;
+  }
+}
+
+function nextQuestion() {
+  currentIndex++;
+  renderQuestion();
+}
+
+function showResults() {
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('filterBar').style.display = 'none';
+  const total = correct + wrong;
+  const pct = total ? Math.round(correct / total * 100) : 0;
+
+  let emoji = '😬', title = 'Есть куда расти';
+  if (pct >= 90) { emoji = '🏆'; title = 'Отличный результат!'; }
+  else if (pct >= 75) { emoji = '🎯'; title = 'Хорошая работа!'; }
+  else if (pct >= 50) { emoji = '📚'; title = 'Нужно повторить'; }
+
+  document.getElementById('resultsEmoji').textContent = emoji;
+  document.getElementById('resultsTitle').textContent = title;
+  document.getElementById('resultsSubtitle').textContent = `Точность: ${pct}% · Лучшая серия: ${maxStreak} подряд`;
+  document.getElementById('rCorrect').textContent = correct;
+  document.getElementById('rWrong').textContent = wrong;
+  document.getElementById('rPct').textContent = pct + '%';
+  document.getElementById('resultsScreen').classList.add('show');
+  document.getElementById('scoreBadge').textContent = `✅ ${correct} / ${total}`;
+
+  const bar = document.querySelector('.progress-fill');
+  bar.style.width = '100%';
+  document.getElementById('progressText').textContent = 'Тест завершён!';
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+// Init
+restart();
+</script>
+</body>
+</html>

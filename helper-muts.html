@@ -376,7 +376,55 @@
 
   .r-stat-val { font-family: 'Unbounded', sans-serif; font-size: 38px; font-weight: 900; margin-bottom: 6px; }
   .r-stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-abel">Серия 🔥</div></div>
+
+  .restart-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none; border-radius: 14px; padding: 16px 44px;
+    color: white; font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.04em; transition: all 0.2s;
+    box-shadow: 0 4px 24px rgba(37,99,235,0.35);
+  }
+
+  .restart-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(37,99,235,0.5); }
+
+  /* Score badge */
+  .score-badge {
+    position: fixed; top: 20px; right: 20px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 100px; padding: 8px 18px;
+    font-family: 'Unbounded', sans-serif; font-size: 12px; font-weight: 700;
+    color: var(--accent3); z-index: 100;
+  }
+
+  /* Animations */
+  @keyframes cardIn  { from { opacity:0; transform:translateY(18px) scale(0.98); } to { opacity:1; transform:none; } }
+  @keyframes fadeUp  { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  @keyframes bounce  { 0%,100%{transform:translateY(0)} 40%{transform:translateY(-18px)} 70%{transform:translateY(-6px)} }
+
+  @media (max-width:600px) {
+    .stats-bar { grid-template-columns: repeat(2,1fr); }
+    .choices { grid-template-columns: 1fr; }
+    .results-grid { grid-template-columns: repeat(2,1fr); }
+    .question-card { padding: 22px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="score-badge" id="scoreBadge">⚡ 0 / 0</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-badge">💬 ReallyWorld · Хелпер — Тренажёр мутов</div>
+    <h1>Тренажёр хелпера</h1>
+    <p>Муты, причины, исключения — отработай до автоматизма</p>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat s-total"><div class="stat-val" id="statTotal">0</div><div class="stat-label">Пройдено</div></div>
+    <div class="stat s-correct"><div class="stat-val" id="statCorrect">0</div><div class="stat-label">Верно</div></div>
+    <div class="stat s-wrong"><div class="stat-val" id="statWrong">0</div><div class="stat-label">Ошибок</div></div>
+    <div class="stat s-streak"><div class="stat-val" id="statStreak">0</div><div class="stat-label">Серия 🔥</div></div>
   </div>
 
   <div class="progress-wrap">
@@ -425,3 +473,819 @@ abel">Серия 🔥</div></div>
     <button class="restart-btn" onclick="restart()">🔄 Пройти снова</button>
   </div>
 </div>
+
+<script>
+const QUESTIONS = [
+
+  // ════════════════════ ФЛУД ════════════════════
+  {
+    cat:'flood', catLabel:'Флуд', catClass:'cat-flood',
+    type:'choice',
+    text:'Сколько одинаковых по смыслу сообщений за минуту считается флудом?',
+    chat:null,
+    options:['2 и более','3 и более','4 и более','5 и более'],
+    correct:0,
+    explain:'2+ сообщения с одинаковым смыслом в течение минуты = флуд → мут 4ч.'
+  },
+  {
+    cat:'flood', catLabel:'Флуд', catClass:'cat-flood',
+    type:'input',
+    text:'Классический флуд: игрок 3 раза написал «продам алмазы» за минуту. Мут на сколько часов?',
+    chat:'[14:24] artemplay: продам алмазы\n[14:44] artemplay: продам алмазы\n[15:01] artemplay: продам алмазы',
+    unit:'ч', answer:'4',
+    explain:'Флуд → мут 4ч. Обязательно используй мод ChatTime!'
+  },
+  {
+    cat:'flood', catLabel:'Флуд', catClass:'cat-flood',
+    type:'choice',
+    text:'Три разных игрока написали одинаковый варп в течение минуты. Как это называется?',
+    chat:'[20:13] dimkaaboba: /warp system32 ezz pvp\n[20:14] XJle6PL: /warp system32 pvp z4 ezz\n[20:34] Mr_ogyrec: /warp system32 жду вас pvp',
+    options:['Флуд символами','Организованный флуд','Массовый флуд','Нет нарушения'],
+    correct:1,
+    explain:'3–5 игроков = организованный флуд → мут 4ч каждому, причина «организованный флуд».'
+  },
+  {
+    cat:'flood', catLabel:'Флуд', catClass:'cat-flood',
+    type:'choice',
+    text:'Организатор написал «кому кит дракона + в чат». 6 человек ответили «+». Что получает организатор?',
+    chat:null,
+    options:['Мут 4ч — организованный флуд','Мут 6ч — организация массового флуда','Нет нарушения — он написал первым','Мут 12ч'],
+    correct:1,
+    explain:'6+ ответов → организация МАССОВОГО флуда → организатор получает мут 6ч. Ответившие — без наказания.'
+  },
+  {
+    cat:'flood', catLabel:'Флуд', catClass:'cat-flood',
+    type:'input',
+    text:'Игрок написал 2 сообщения в глобал и 1 в /bc с одинаковым смыслом. Сколько часов мута?',
+    chat:'[22:57] bifaf: Кто пвп /warp ezzki\n[22:59] bifaf: Кто пвп /warp ezzki\n[23:13] [ОБЪЯВЛЕНИЕ] bifaf: Кто пвп /warp ezzki',
+    unit:'ч', answer:'6',
+    explain:'Обход флуда через /bc → мут 6ч «обход флуда».'
+  },
+  {
+    cat:'flood', catLabel:'Флуд', catClass:'cat-flood',
+    type:'choice',
+    text:'2 сообщения в глобальном чате + 1 на спавне с тем же смыслом — это нарушение?',
+    chat:null,
+    options:['Да — мут 4ч, это флуд','Нет — разные чаты','Нет нарушения', 'Мут 6ч — обход'],
+    correct:0,
+    explain:'Глобал + спавн учитываются вместе. Флуд → мут 4ч.'
+  },
+  {
+    cat:'flood', catLabel:'Флуд', catClass:'cat-flood',
+    type:'choice',
+    text:'Что такое «исключение из флуда» после осады?',
+    chat:'_TheUuni_: + элики с осады\nandruxatop4ik: + шар геракла с осады\ngranatoviysok: + спавнер с осады\nPuhlyash: + д5 с осады\nwatermelon: + ничего с осады\nAndreichbafovar: + эф10 с осады',
+    options:['Мутим всех 4ч — массовый флуд','Не мутим — это исключение после осады','Мутим только 6+ человек','Мутим организатора'],
+    correct:1,
+    explain:'Флуд во время/после осады или при лагах сервера — исключение. Никого не мутим.'
+  },
+  {
+    cat:'flood', catLabel:'Флуд', catClass:'cat-flood',
+    type:'choice',
+    text:'«Кто пвп + в лс» — это организация флуда?',
+    chat:null,
+    options:['Да — мут 4ч','Нет — исключение, не мутим'],
+    correct:1,
+    explain:'«+ в лс» — исключение. Также не мутим: «кто дуэль + в чат», «кто приютит + в чат», «кто выживать вместе + в чат».'
+  },
+  {
+    cat:'flood', catLabel:'Флуд', catClass:'cat-flood',
+    type:'choice',
+    text:'6 игроков написали цифры 1,2,3,4,5,6 подряд. Что выдаём каждому?',
+    chat:'bifaf: 1\nSoniloon: 2\nEgor: 3\nAngel: 4\nTeLePuZik: 5\nxlebysek__: 6',
+    options:['Ничего','Мут 4ч — участник массового флуда','Мут 6ч — организованный флуд','Предупреждение'],
+    correct:1,
+    explain:'6+ человек, каждый пишет уникальный символ последовательно = массовый флуд → мут 4ч каждому «уч. масс. флуда».'
+  },
+  {
+    cat:'flood', catLabel:'Флуд', catClass:'cat-flood',
+    type:'choice',
+    text:'Игрок написал «Я говорю макан, вы говорите…». Это флуд?',
+    chat:null,
+    options:['Да — организация флуда, мут 4ч','Нет — это провокация, бан 12ч','Нет нарушения','Мут 6ч'],
+    correct:1,
+    explain:'«Я говорю макан…» — провокация на нарушение правил → бан 12ч (не мут!).'
+  },
+  {
+    cat:'flood', catLabel:'Флуд', catClass:'cat-flood',
+    type:'choice',
+    text:'Можно ли выдавать мут за флуд без мода ChatTime?',
+    chat:null,
+    options:['Да, если очевидно','Нет — обязательно использовать ChatTime, иначе устник'],
+    correct:1,
+    explain:'Мутить за флуд без мода ChatTime = устный выговор. Использование мода обязательно.'
+  },
+
+  // ════════════════════ ФЛУД СИМВОЛАМИ ════════════════════
+  {
+    cat:'symbols', catLabel:'Символы', catClass:'cat-symbols',
+    type:'input',
+    text:'От скольких бессмысленных символов подряд выдаётся мут за флуд символами?',
+    chat:null,
+    unit:'символов', answer:'10',
+    explain:'10 и более бессмысленных символов → мут 4ч за флуд символами.'
+  },
+  {
+    cat:'symbols', catLabel:'Символы', catClass:'cat-symbols',
+    type:'choice',
+    text:'«тп кто пвп !!!!!!!!!! » — 10 восклицательных знаков. Нарушение?',
+    chat:null,
+    options:['Да — мут 4ч, флуд символами','Нет — знаки препинания не считаются'],
+    correct:0,
+    explain:'10 знаков препинания (любых) подряд = флуд символами → мут 4ч.'
+  },
+  {
+    cat:'symbols', catLabel:'Символы', catClass:'cat-symbols',
+    type:'choice',
+    text:'«Soniloon: ghjlfv dtob yf» — игрок забыл переключить раскладку. Мутим?',
+    chat:null,
+    options:['Да — мут 4ч, флуд символами','Нет — транслит, исключение'],
+    correct:0,
+    explain:'Забытая раскладка (не транслит!) = флуд символами → мут 4ч. Транслит (русские слова на лат.) — исключение, не мутим.'
+  },
+  {
+    cat:'symbols', catLabel:'Символы', catClass:'cat-symbols',
+    type:'choice',
+    text:'«privki parni kak dela» — транслит. Мутим?',
+    chat:null,
+    options:['Да — флуд символами','Нет — транслит является исключением'],
+    correct:1,
+    explain:'Транслит (русские слова, написанные латиницей) — исключение. Не мутим.'
+  },
+  {
+    cat:'symbols', catLabel:'Символы', catClass:'cat-flood',
+    type:'choice',
+    text:'«Ребята !!!!! Всем !!! Привет !!!!» — бессмысленные символы разбросаны, но всего 10+. Мутим?',
+    chat:null,
+    options:['Да — флуд символами, мут 4ч','Нет — они не подряд'],
+    correct:0,
+    explain:'Бессмысленные символы в разбросе тоже считаются (от 10 суммарно) → мут 4ч.'
+  },
+  {
+    cat:'symbols', catLabel:'Символы', catClass:'cat-symbols',
+    type:'choice',
+    text:'«тп кто пвп в з4 тп кто пвп в з4 тп кто пвп в з4 тп кто пвп в з4» — 4+ повторения словосочетания. Мутим?',
+    chat:null,
+    options:['Да — флуд символами, мут 4ч','Нет — это флуд, а не символы','Нет нарушения'],
+    correct:0,
+    explain:'4+ повторяющихся словосочетания = флуд символами → мут 4ч.'
+  },
+  {
+    cat:'symbols', catLabel:'Символы', catClass:'cat-symbols',
+    type:'choice',
+    text:'«всем приветттттттттт» — буква т повторяется много раз. Мутим?',
+    chat:null,
+    options:['Да — флуд символами, мут 4ч','Нет — бессмысленных символов всего 9'],
+    correct:1,
+    explain:'Буква «т» в слове «привет» осмысленна — бессмысленных всего 9, это меньше 10. Нарушения нет.'
+  },
+  {
+    cat:'symbols', catLabel:'Символы', catClass:'cat-symbols',
+    type:'choice',
+    text:'«#дайтемнесетнезерки» — хэштег с длинным словом. Что выдаём?',
+    chat:null,
+    options:['Мут 4ч — флуд символами','Мут 6ч — обход флуда символами','Нет нарушения'],
+    correct:1,
+    explain:'Хэштег = обход флуда символами → мут 6ч.'
+  },
+  {
+    cat:'symbols', catLabel:'Символы', catClass:'cat-symbols',
+    type:'choice',
+    text:'Игрок написал «Ты нуб, Ты рак, Ты школьник, Ты оболтус» в одном сообщении. Нарушение?',
+    chat:null,
+    options:['Мут 4ч — флуд символами (4+ исключения из оск)','Мут 4ч — оскорбительное поведение','Нет нарушения — это исключения из оскорблений'],
+    correct:0,
+    explain:'4+ оскорбительных исключения в одном сообщении = флуд символами → мут 4ч.'
+  },
+  {
+    cat:'symbols', catLabel:'Символы', catClass:'cat-symbols',
+    type:'choice',
+    text:'«Хлебушек и бифаф пошлите играть пжпжпжпжпж» — «пж» повторяется 5 раз (10 символов). Мутим?',
+    chat:null,
+    options:['Да — флуд символами','Нет — «пж» имеет смысл, бессмысленных только 8'],
+    correct:1,
+    explain:'«Пж» — слово с смыслом, значит бессмысленных символов всего 8 (< 10). Нарушения нет.'
+  },
+
+  // ════════════════════ КАПС ════════════════════
+  {
+    cat:'caps', catLabel:'Капс', catClass:'cat-caps',
+    type:'choice',
+    text:'Минимальное условие для мута за капс?',
+    chat:null,
+    options:['Любые слова в капсе','От 3 слов в предложении И 50%+ слов в капсе','От 5 слов в капсе','Всё предложение в капсе'],
+    correct:1,
+    explain:'Предложение от 3 слов, 50% и более в капсе → мут 4ч.'
+  },
+  {
+    cat:'caps', catLabel:'Капс', catClass:'cat-caps',
+    type:'choice',
+    text:'«Я НАШЁЛ РЫБКУ» — 3 слова, все в капсе. Нарушение?',
+    chat:null,
+    options:['Да — мут 4ч, капс','Нет — слишком короткое'],
+    correct:0,
+    explain:'3 слова = минимум. 3 из 3 в капсе = 100% > 50% → мут 4ч.'
+  },
+  {
+    cat:'caps', catLabel:'Капс', catClass:'cat-caps',
+    type:'choice',
+    text:'«КИНЬ мне тп» — 3 слова, одно в капсе. Мутим?',
+    chat:null,
+    options:['Да — мут 4ч','Нет — только 1 из 3 слов в капсе (33%)'],
+    correct:1,
+    explain:'1 из 3 слов = 33% — меньше 50%. Нарушения нет.'
+  },
+  {
+    cat:'caps', catLabel:'Капс', catClass:'cat-caps',
+    type:'choice',
+    text:'«РЕБЯТА, а вы ПРАВДА думаете, что я НИЧЕГО не вижу?» — 3 слова из 10 в капсе. Мутим?',
+    chat:null,
+    options:['Да — 3 слова в капсе','Нет — 3 из 10 = 30%, меньше 50%'],
+    correct:1,
+    explain:'3 из 10 слов = 30% < 50%. Предлоги и союзы тоже считаем. Нарушения нет.'
+  },
+  {
+    cat:'caps', catLabel:'Капс', catClass:'cat-caps',
+    type:'choice',
+    text:'«ХаЮ ХаЙ ВсЕм РеБяТа» — чередование регистров. Мутим?',
+    chat:null,
+    options:['Нет — не весь текст в капсе','Да — лестница из букв (от 8 символов), мут 4ч'],
+    correct:1,
+    explain:'«Лестница» из букв (от 8 символов) = разновидность капса → мут 4ч.'
+  },
+  {
+    cat:'caps', catLabel:'Капс', catClass:'cat-caps',
+    type:'input',
+    text:'«ВСЕ тп НА варп» — 2 слова из 4 в капсе (50%). Мут на сколько часов?',
+    chat:null,
+    unit:'ч', answer:'4',
+    explain:'2 из 4 слов = 50% ≥ 50%, предложение из 3+ слов → мут 4ч.'
+  },
+  {
+    cat:'caps', catLabel:'Капс', catClass:'cat-caps',
+    type:'choice',
+    text:'Капс в /bc — разрешён?',
+    chat:null,
+    options:['Нет — мутим как обычно','Да — капс в /bc разрешён, но нек. /bc — бан 1 день'],
+    correct:1,
+    explain:'Капс в /bc — разрешён. Это исключение из правила капса.'
+  },
+
+  // ════════════════════ МАТ ════════════════════
+  {
+    cat:'mat', catLabel:'Мат', catClass:'cat-mat',
+    type:'choice',
+    text:'С какого количества матов выдаётся мут?',
+    chat:null,
+    options:['С 1','С 2','С 3','С 5'],
+    correct:2,
+    explain:'Мут выдаём от 3 матов. За 1–2 мата не мутим.'
+  },
+  {
+    cat:'mat', catLabel:'Мат', catClass:'cat-mat',
+    type:'input',
+    text:'«сука блять нахуй я пошел» — 3 мата. Мут на сколько часов?',
+    chat:null,
+    unit:'ч', answer:'3',
+    explain:'Чрезмерное употребление нецензурной лексики → мут 3ч.'
+  },
+  {
+    cat:'mat', catLabel:'Мат', catClass:'cat-mat',
+    type:'choice',
+    text:'Как правильно указывать причину мута за мат?',
+    chat:null,
+    options:['«мат»','«маты»','«чрезм. употребление нец. лексики»','«нецензурные выражения»'],
+    correct:2,
+    explain:'Писать «мат» или «маты» нельзя. Правильно: «чрезм. употребление нец. лексики» или полностью.'
+  },
+  {
+    cat:'mat', catLabel:'Мат', catClass:'cat-mat',
+    type:'choice',
+    text:'Три сообщения с матом за 2 минуты — это нарушение?',
+    chat:'[15:26] supergeroi: блять зачем\n[15:28] supergeroi: ну нахуя\n[15:29] supergeroi: пиздец зачем ты это сделал',
+    options:['Да — мут 3ч (3 мата в пределах 2 минут)','Нет — мат в разных сообщениях','Да — мут 4ч'],
+    correct:0,
+    explain:'3+ сообщения с матом в течение 2 минут = нарушение → мут 3ч. Более 2 минут — не мутим.'
+  },
+  {
+    cat:'mat', catLabel:'Мат', catClass:'cat-mat',
+    type:'choice',
+    text:'«бл9ть, нах3й купил» — завуалированный мат. Мутим?',
+    chat:null,
+    options:['Нет — символы заменены','Да — завуалированный мат тоже нарушение, мут 3ч'],
+    correct:1,
+    explain:'Завуалированный (запиканный/замазанный) мат = нарушение → мут 3ч.'
+  },
+
+  // ════════════════════ ОСКОРБЛЕНИЯ ════════════════════
+  {
+    cat:'osk', catLabel:'Оскорбление', catClass:'cat-osk',
+    type:'input',
+    text:'Оскорбительное поведение («ты долбоёб», «ты даун» и т.п.). Мут на сколько часов?',
+    chat:null,
+    unit:'ч', answer:'4',
+    explain:'Оскорбительное поведение → мут 4ч. Причина: «оскорбительное поведение» / «оск пов.»'
+  },
+  {
+    cat:'osk', catLabel:'Оскорбление', catClass:'cat-osk',
+    type:'choice',
+    text:'«Ты нуб» — оскорбительное поведение?',
+    chat:null,
+    options:['Да — мут 4ч','Нет — «нуб» является исключением'],
+    correct:1,
+    explain:'«Нуб», «рак», «школьник», «слабак», «клоун», «лузер» — исключения. Не мутим.'
+  },
+  {
+    cat:'osk', catLabel:'Оскорбление', catClass:'cat-osk',
+    type:'choice',
+    text:'«Ты пидарас» — это оскорбительное поведение?',
+    chat:null,
+    options:['Да — мут 4ч','Нет — не считается оскорблением'],
+    correct:0,
+    explain:'«Ты пидарас» — оскорбительное поведение → мут 4ч.'
+  },
+  {
+    cat:'osk', catLabel:'Оскорбление', catClass:'cat-osk',
+    type:'choice',
+    text:'«Ты ошибка природы» — мутим?',
+    chat:null,
+    options:['Да — оск. поведение, мут 4ч','Нет нарушения'],
+    correct:0,
+    explain:'«Ты ошибка природы» — оскорбительное поведение → мут 4ч.'
+  },
+  {
+    cat:'osk', catLabel:'Оскорбление', catClass:'cat-osk',
+    type:'choice',
+    text:'«Ты скуф» — оскорбление?',
+    chat:null,
+    options:['Да — мут 4ч','Нет — не мутим'],
+    correct:1,
+    explain:'«Ты скуф» — не мутим. Это в списке исключений.'
+  },
+  {
+    cat:'osk', catLabel:'Оскорбление', catClass:'cat-osk',
+    type:'choice',
+    text:'«Ты корова» — оскорбление животным. Мутим?',
+    chat:null,
+    options:['Да — оск. поведение, мут 4ч','Нет — животное, исключение'],
+    correct:0,
+    explain:'Оскорбление животным (корова, осёл, свинья, петух) = оскорбительное поведение → мут 4ч. Исключения: кот, кошка, суслик, барсук, белка, панда, енот, орёл, лев.'
+  },
+  {
+    cat:'osk', catLabel:'Оскорбление', catClass:'cat-osk',
+    type:'choice',
+    text:'«Ты даун?» — вопрос с оскорблением. Мутим?',
+    chat:null,
+    options:['Да — вопрос с оскорблением = оск. поведение, мут 4ч','Нет — это вопрос, а не утверждение'],
+    correct:0,
+    explain:'Вопрос с оскорблением («Ты даун?», «Ты дурак?») = оскорбительное поведение → мут 4ч.'
+  },
+  {
+    cat:'osk', catLabel:'Оскорбление', catClass:'cat-osk',
+    type:'choice',
+    text:'Игрок 1: «Ты долбоёб». Игрок 2: «Ты тоже». Мутим обоих?',
+    chat:null,
+    options:['Да — оба нарушили','Нет — только игрок 1, косвенное оскорбление не мутим'],
+    correct:1,
+    explain:'Игрок 1 — мут 4ч. Игрок 2 ответил косвенно («ты тоже») — за косвенные оскорбления не мутим.'
+  },
+  {
+    cat:'osk', catLabel:'Оскорбление', catClass:'cat-osk',
+    type:'choice',
+    text:'«Я тупой дурак» — самооскорбление двумя лёгкими словами. Мутим?',
+    chat:null,
+    options:['Да — оск. поведение','Нет — два лёгких самооскорбления не мутим'],
+    correct:1,
+    explain:'Два лёгких самооскорбления — не мутим. Но «я ёбанный дурак» — мутим (есть 1 грубое).'
+  },
+  {
+    cat:'osk', catLabel:'Оскорбление', catClass:'cat-osk',
+    type:'choice',
+    text:'«Клоун ебаный» — что выдаём?',
+    chat:null,
+    options:['Нет нарушения — «клоун» исключение','Мут 4ч — оск. поведение (исключение + мат = мутим)'],
+    correct:1,
+    explain:'«Клоун» — исключение, но «клоун ебаный» = исключение + оскорбление → мутим. Мут 4ч.'
+  },
+
+  // ════════════════════ АМОРАЛ ════════════════════
+  {
+    cat:'amor', catLabel:'Аморал', catClass:'cat-amor',
+    type:'input',
+    text:'Аморальное поведение («хочу ебаться», «хуй» и т.п.). Мут на сколько часов?',
+    chat:null,
+    unit:'ч', answer:'3',
+    explain:'Аморальное поведение → мут 3ч.'
+  },
+  {
+    cat:'amor', catLabel:'Аморал', catClass:'cat-amor',
+    type:'choice',
+    text:'«Ебать» без контекста — это аморал?',
+    chat:null,
+    options:['Да — мут 3ч','Нет — без контекста не мутим'],
+    correct:1,
+    explain:'«Ебать» без контекста — не мутим. «Я вас щас буду ебать» — мутим (есть аморальный контекст).'
+  },
+  {
+    cat:'amor', catLabel:'Аморал', catClass:'cat-amor',
+    type:'choice',
+    text:'«So so» — аморал?',
+    chat:null,
+    options:['Да — всегда аморал','Нет — означает «так себе». Аморал только с контекстом'],
+    correct:1,
+    explain:'«So so» = «так себе» — не аморал. Только если в аморальном контексте (напр. «ты будешь делать мне so so») — мутим.'
+  },
+  {
+    cat:'amor', catLabel:'Аморал', catClass:'cat-amor',
+    type:'choice',
+    text:'«Я ебал свой пинг» — аморал?',
+    chat:null,
+    options:['Да — слово «ебал» = аморал','Нет — контекст не аморальный'],
+    correct:1,
+    explain:'«Я ебал свой пинг / лук / инет» — не аморал, контекст не сексуальный.'
+  },
+  {
+    cat:'amor', catLabel:'Аморал', catClass:'cat-amor',
+    type:'choice',
+    text:'«Хуй тебе» — что это за нарушение?',
+    chat:null,
+    options:['Оскорбительное поведение — мут 4ч','Аморальное поведение — мут 3ч','Чрезмерный мат — мут 3ч'],
+    correct:1,
+    explain:'«Хуй» — аморал, не оскорбление. Мут 3ч за аморальное поведение.'
+  },
+  {
+    cat:'amor', catLabel:'Аморал', catClass:'cat-amor',
+    type:'choice',
+    text:'«Чмокнуть» — аморал?',
+    chat:null,
+    options:['Нет — не мутим','Да — аморал, мут 3ч'],
+    correct:0,
+    explain:'«Чмокнуть» — не аморал. «Чпокнуть» — аморал. Разные слова!'
+  },
+  {
+    cat:'amor', catLabel:'Аморал', catClass:'cat-amor',
+    type:'choice',
+    text:'«Кто сосал/кому в рот» — что выдаём?',
+    chat:null,
+    options:['Только аморал — мут 3ч','Аморал + организация флуда — мут за оба нарушения','Только организация флуда — мут 4ч'],
+    correct:1,
+    explain:'«Кто сосал/кому в рот» = аморал + организация флуда → мутим за оба нарушения.'
+  },
+
+  // ════════════════════ РОДНЫЕ ════════════════════
+  {
+    cat:'rodny', catLabel:'Родные', catClass:'cat-rodny',
+    type:'choice',
+    text:'«Игрок 2: Твоя мама» (в ответ на «кто пвп?»). Что выдаём?',
+    chat:'Игрок 1: Кто пвп?\nИгрок 2: Твоя мама',
+    options:['Нет нарушения — просто ответ','Мут 5 дней — некорректное упоминание родных','Мут 15 дней — оскорбление родных'],
+    correct:1,
+    explain:'Некорректное упоминание родных → мут 5 дней.'
+  },
+  {
+    cat:'rodny', catLabel:'Родные', catClass:'cat-rodny',
+    type:'input',
+    text:'«Я твою мать ебал». Мут на сколько ДНЕЙ?',
+    chat:null,
+    unit:'дней', answer:'15',
+    explain:'Прямое оскорбление родных → мут 15 дней.'
+  },
+  {
+    cat:'rodny', catLabel:'Родные', catClass:'cat-rodny',
+    type:'input',
+    text:'«У меня мать ебнутая» — самооскорбление родных. Мут на сколько ДНЕЙ?',
+    chat:null,
+    unit:'дней', answer:'5',
+    explain:'Самооскорбление родных → мут 5 дней.'
+  },
+  {
+    cat:'rodny', catLabel:'Родные', catClass:'cat-rodny',
+    type:'choice',
+    text:'«**** твою мать» — сколько звёздочек должно быть для нарушения?',
+    chat:null,
+    options:['Любое количество','Ровно 4 звёздочки','3 и более','Не имеет значения'],
+    correct:1,
+    explain:'Мут за оск. родных выдаём только если написано ровно 4 звёздочки (****). Ни больше, ни меньше.'
+  },
+  {
+    cat:'rodny', catLabel:'Родные', catClass:'cat-rodny',
+    type:'choice',
+    text:'«Мамой клянись что это не обман» — некорректное упоминание родных?',
+    chat:null,
+    options:['Да — мут 5 дней','Нет — устойчивое выражение, нарушения нет'],
+    correct:1,
+    explain:'«Мамой клянись», «Иди маме поплачь», «Мамкин скамер» — всё это НЕ нарушения.'
+  },
+  {
+    cat:'rodny', catLabel:'Родные', catClass:'cat-rodny',
+    type:'choice',
+    text:'«Твоя мать табуретка» — это оскорбление родных или некорр. упоминание?',
+    chat:null,
+    options:['Оскорбление родных — мут 15 дней','Некорр. упоминание родных — мут 5 дней'],
+    correct:1,
+    explain:'«Твоя мать табуретка», «Сын трактора», «Ты сын езки» — некорректное упоминание родных → мут 5 дней.'
+  },
+  {
+    cat:'rodny', catLabel:'Родные', catClass:'cat-rodny',
+    type:'choice',
+    text:'«Глотку твоей матери вырву» — какое нарушение?',
+    chat:null,
+    options:['Некорректное упоминание — мут 5 дней','Оскорбление родных — мут 15 дней (слишком грубо)'],
+    correct:1,
+    explain:'Слишком грубое некорректное упоминание = приравнивается к оскорблению родных → мут 15 дней.'
+  },
+
+  // ════════════════════ ПРОЧЕЕ ════════════════════
+  {
+    cat:'other', catLabel:'Прочее', catClass:'cat-other',
+    type:'input',
+    text:'Призыв к суициду («иди в окно выкинься»). Мут на сколько часов?',
+    chat:null,
+    unit:'ч', answer:'6',
+    explain:'Призыв к суициду → мут 6ч.'
+  },
+  {
+    cat:'other', catLabel:'Прочее', catClass:'cat-other',
+    type:'choice',
+    text:'«Ты будешь гореть в аду» — призыв к суициду?',
+    chat:null,
+    options:['Да — мут 6ч','Нет нарушения'],
+    correct:1,
+    explain:'«Ты будешь гореть в аду» — не является призывом к суициду. Нарушения нет.'
+  },
+  {
+    cat:'other', catLabel:'Прочее', catClass:'cat-other',
+    type:'input',
+    text:'Упоминание стороннего проекта («Go na pt ezz»). Мут на сколько часов?',
+    chat:null,
+    unit:'ч', answer:'2',
+    explain:'Упоминание стороннего проекта (в т.ч. сокращения: пт, рипка, саник) → мут 2ч.'
+  },
+  {
+    cat:'other', catLabel:'Прочее', catClass:'cat-other',
+    type:'choice',
+    text:'«Alt+F4 all получите ГМ» — что выдаём?',
+    chat:null,
+    options:['Мут 4ч — оск. поведение','Мут 6ч — внеигровой обман','Бан 1д','Нет нарушения'],
+    correct:1,
+    explain:'Сочетания клавиш/команды, препятствующие игре (Alt+F4, F3+C) → мут 6ч.'
+  },
+  {
+    cat:'other', catLabel:'Прочее', catClass:'cat-other',
+    type:'choice',
+    text:'«/hub — получить кит реббита» — внеигровой обман?',
+    chat:null,
+    options:['Да — мут 6ч','Нет — команды сервера являются исключением'],
+    correct:1,
+    explain:'Команды сервера (/hub, /рги и т.п.) — исключение из правила внеигрового обмана.'
+  },
+  {
+    cat:'other', catLabel:'Прочее', catClass:'cat-other',
+    type:'input',
+    text:'Выпрашивание снятия наказания («хелпер сними мут с друга»). Мут на сколько часов?',
+    chat:null,
+    unit:'ч', answer:'2',
+    explain:'Выпрашивание снятия/выдачи наказания → мут 2ч. Исключение — выпрашивание у MrDomer.'
+  },
+  {
+    cat:'other', catLabel:'Прочее', catClass:'cat-other',
+    type:'choice',
+    text:'Публичная критика проекта («клоунский проект»). Какое наказание?',
+    chat:null,
+    options:['Мут 12ч','Мут 1 день','Мут 3 дня','Мут 5 дней'],
+    correct:2,
+    explain:'Публичная критика проекта → мут 3 дня.'
+  },
+  {
+    cat:'other', catLabel:'Прочее', catClass:'cat-other',
+    type:'input',
+    text:'Политическая агитация («СВО», «Слава Украине» и т.п.). Мут на сколько ДНЕЙ?',
+    chat:null,
+    unit:'дней', answer:'2',
+    explain:'Политическая агитация (лёгкая) → мут 2 дня.'
+  },
+  {
+    cat:'other', catLabel:'Прочее', catClass:'cat-other',
+    type:'choice',
+    text:'Можно ли выдавать мут и бан одновременно?',
+    chat:null,
+    options:['Да, если нарушений несколько','Нет — это ошибка, только что-то одно'],
+    correct:1,
+    explain:'Бан и мут нельзя выдавать одновременно. Бан — более строгое наказание. Выбираем что-то одно.'
+  },
+  {
+    cat:'other', catLabel:'Прочее', catClass:'cat-other',
+    type:'choice',
+    text:'«В субботу вайп инфа сотка» — что выдаём?',
+    chat:null,
+    options:['Нет нарушения — мнение игрока','Мут 12ч — дезинформация','Мут 4 дня — дезинформация','Мут 2 дня'],
+    correct:1,
+    explain:'Дезинформация о вайпе → мут 12ч. Вопросы о дате вайпа и «я думаю вайп 22 числа» — исключение.'
+  },
+  {
+    cat:'other', catLabel:'Прочее', catClass:'cat-other',
+    type:'choice',
+    text:'«Скиньте 100р на киви» — что выдаём?',
+    chat:null,
+    options:['Нет нарушения — может игровая валюта','Мут 2 дня — денежные операции с реальной валютой','Бан 2 дня'],
+    correct:1,
+    explain:'Любое упоминание денежных операций с реальной валютой → мут 2 дня.'
+  },
+];
+
+// ─── STATE ───
+let questions = [], idx = 0, correct = 0, wrong = 0, streak = 0, maxStreak = 0, answered = false, activeFilter = 'all';
+
+function setFilter(f) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach((b, i) => {
+    const fs = ['all','flood','symbols','caps','mat','osk','amor','rodny','other'];
+    b.classList.toggle('active', fs[i] === f);
+  });
+  restart();
+}
+
+function shuffle(a) {
+  const b = [...a];
+  for (let i = b.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [b[i],b[j]] = [b[j],b[i]];
+  }
+  return b;
+}
+
+function restart() {
+  const pool = activeFilter === 'all' ? QUESTIONS : QUESTIONS.filter(q => q.cat === activeFilter);
+  questions = shuffle(pool);
+  idx = 0; correct = 0; wrong = 0; streak = 0; maxStreak = 0; answered = false;
+  document.getElementById('resultsScreen').classList.remove('show');
+  document.getElementById('quizArea').style.display = '';
+  document.getElementById('filterBar').style.display = '';
+  updateStats(); render();
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = idx;
+  document.getElementById('statCorrect').textContent = correct;
+  document.getElementById('statWrong').textContent = wrong;
+  document.getElementById('statStreak').textContent = streak;
+  document.getElementById('scoreBadge').textContent = `⚡ ${correct} / ${idx}`;
+  const pct = questions.length ? Math.round(idx/questions.length*100) : 0;
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressText').textContent = `Вопрос ${idx+1} из ${questions.length}`;
+  document.getElementById('progressPct').textContent = pct+'%';
+  document.getElementById('qNum').textContent = `${idx+1} / ${questions.length}`;
+}
+
+function render() {
+  if (idx >= questions.length) { showResults(); return; }
+  answered = false;
+  const q = questions[idx];
+  const card = document.getElementById('questionCard');
+  card.className = 'question-card';
+
+  document.getElementById('categoryTag').className = 'category-tag ' + q.catClass;
+  document.getElementById('categoryTag').textContent = q.catLabel;
+  document.getElementById('questionText').textContent = q.text;
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').innerHTML = '';
+  document.getElementById('nextBtn').className = 'next-btn';
+
+  // Chat
+  const ca = document.getElementById('chatArea');
+  if (q.chat) {
+    ca.innerHTML = '<div class="chat-bubble">' + q.chat.split('\n').map(line => {
+      const m = line.match(/^(\[[^\]]+\]\s[^ ]+|[^ ]+): (.+)$/);
+      if (m) return `<span class="nick">${m[1]}:</span> <span class="msg">${m[2]}</span>`;
+      return `<span class="msg">${line}</span>`;
+    }).join('<br>') + '</div>';
+  } else { ca.innerHTML = ''; }
+
+  const area = document.getElementById('answerArea');
+  area.innerHTML = '';
+
+  if (q.type === 'choice') {
+    const grid = document.createElement('div');
+    grid.className = 'choices';
+    const L = ['А','Б','В','Г'];
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = `<span class="choice-letter">${L[i]}</span>${opt}`;
+      btn.onclick = () => handleChoice(i, q.correct, q.explain, btn, grid.querySelectorAll('.choice-btn'));
+      grid.appendChild(btn);
+    });
+    area.appendChild(grid);
+  } else {
+    const wrap = document.createElement('div');
+    wrap.className = 'input-area';
+    const hint = document.createElement('div');
+    hint.className = 'input-hint';
+    hint.textContent = q.inputType === 'text' ? 'Введи ответ текстом' : `Введи число (${q.unit})`;
+    wrap.appendChild(hint);
+
+    const grp = document.createElement('div');
+    grp.className = 'time-input-group';
+    const inp = document.createElement('input');
+    inp.className = 'time-input';
+    inp.id = 'mainInput';
+    inp.type = q.inputType === 'text' ? 'text' : 'number';
+    inp.min = '0';
+    inp.placeholder = q.inputType === 'text' ? '...' : '?';
+    grp.appendChild(inp);
+    const un = document.createElement('span');
+    un.className = 'time-unit';
+    un.textContent = q.unit;
+    grp.appendChild(un);
+    wrap.appendChild(grp);
+
+    const sbtn = document.createElement('button');
+    sbtn.className = 'submit-btn';
+    sbtn.textContent = 'Проверить';
+    sbtn.onclick = () => handleInput(inp.value.trim(), q.answer, q.unit, q.explain, inp, sbtn);
+    wrap.appendChild(sbtn);
+
+    inp.addEventListener('keydown', e => { if (e.key==='Enter' && !answered) sbtn.click(); });
+    area.appendChild(wrap);
+  }
+  updateStats();
+}
+
+function handleChoice(sel, cor, explain, btn, all) {
+  if (answered) return;
+  answered = true;
+  all.forEach((b,i) => { b.disabled=true; if(i===cor) b.classList.add('reveal'); });
+  if (sel === cor) {
+    btn.classList.add('sel-correct');
+    correct++; streak++; maxStreak = Math.max(maxStreak, streak);
+    feedback(true, explain);
+    document.getElementById('questionCard').classList.add('correct-card');
+  } else {
+    btn.classList.add('sel-wrong');
+    wrong++; streak=0;
+    feedback(false, explain, all[cor].textContent.slice(1).trim());
+    document.getElementById('questionCard').classList.add('wrong-card');
+  }
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function handleInput(val, exp, unit, explain, inp, btn) {
+  if (answered || !val) return;
+  answered = true;
+  inp.disabled = true; btn.disabled = true;
+  const norm = v => v.toLowerCase().replace(/\s/g,'').replace(/ч$|часов$|часа$|час$/,'').replace(/дней$|день$|д$/,'');
+  const ok = norm(val) === norm(exp) || val.toLowerCase() === exp.toLowerCase();
+  if (ok) {
+    inp.style.color = 'var(--green)';
+    inp.parentElement.style.borderColor = 'rgba(34,197,94,0.5)';
+    correct++; streak++; maxStreak = Math.max(maxStreak, streak);
+    feedback(true, explain);
+    document.getElementById('questionCard').classList.add('correct-card');
+  } else {
+    inp.style.color = 'var(--red)';
+    inp.parentElement.style.borderColor = 'rgba(239,68,68,0.5)';
+    wrong++; streak=0;
+    feedback(false, explain, `${exp} ${unit}`);
+    document.getElementById('questionCard').classList.add('wrong-card');
+  }
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function feedback(ok, explain, correctAns=null) {
+  const fb = document.getElementById('feedback');
+  if (ok) {
+    fb.className = 'feedback fb-correct show';
+    fb.innerHTML = `✅ <strong>Верно!</strong> ${explain}`;
+  } else {
+    fb.className = 'feedback fb-wrong show';
+    fb.innerHTML = `❌ <strong>Неверно.</strong> ${explain}${correctAns ? ` <span class="ans"> → ${correctAns}</span>` : ''}`;
+  }
+}
+
+function nextQ() { idx++; render(); }
+
+function showResults() {
+  document.getElementById('quizArea').style.display = 'none';
+  document.getElementById('filterBar').style.display = 'none';
+  const total = correct+wrong, pct = total ? Math.round(correct/total*100) : 0;
+  let emoji='😬', title='Стоит повторить';
+  if (pct>=90){emoji='🏆';title='Блестяще!';}
+  else if(pct>=75){emoji='🎯';title='Хорошая работа!';}
+  else if(pct>=50){emoji='📚';title='Нужно ещё потренироваться';}
+  document.getElementById('resEmoji').textContent = emoji;
+  document.getElementById('resTitle').textContent = title;
+  document.getElementById('resSub').textContent = `Точность: ${pct}% · Рекордная серия: ${maxStreak} подряд`;
+  document.getElementById('rC').textContent = correct;
+  document.getElementById('rW').textContent = wrong;
+  document.getElementById('rP').textContent = pct+'%';
+  document.getElementById('resultsScreen').classList.add('show');
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressText').textContent = 'Тест завершён!';
+  document.getElementById('progressPct').textContent = pct+'%';
+  document.getElementById('scoreBadge').textContent = `✅ ${correct} / ${total}`;
+}
+
+restart();
+</script>
+</body>
+</html>
